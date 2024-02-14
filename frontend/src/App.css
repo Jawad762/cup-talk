@@ -1,0 +1,110 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz@6..12&display=swap');
+
+html, body, #root {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Nunito Sans', sans-serif;
+}
+
+._bg-pattern {
+  background: linear-gradient(to right, rgba(16, 0, 35, 1), rgba(16, 0, 35, 0.95)), url('../public/logo2.jpg');
+  background-size: 60px;
+  background-repeat: repeat;
+}
+
+._bg-pattern-2 {
+  background: #100023
+}
+
+._blur {
+    backdrop-filter: blur(10px)
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active{
+    font-size: 1rem;
+    border: 2px solid white;
+    color: white;
+}
+
+  #conversation::-webkit-scrollbar, #conversations::-webkit-scrollbar {
+    width: 12px;
+  }
+  
+  #conversation::-webkit-scrollbar-thumb, #conversations::-webkit-scrollbar-thumb {
+    background-color: #8a2be2;
+    border-radius: 12px;
+  }
+  
+  #conversation::-webkit-scrollbar-track, #conversations::-webkit-scrollbar-track {
+    background-color: transparent;
+  }
+
+  dialog::backdrop {
+    background-color: rgba(0, 0, 0, 0.5);
+  }
+
+/* Typing animation below */
+.chat-bubble {
+  background-color: #d6d8df;
+  padding: 4px 12px;
+  -webkit-border-radius: 20px;
+  -moz-border-radius: 20px;
+  border-radius: 20px;
+  display: inline-block;
+}
+
+.typing {
+  align-items: center;
+  display: flex;
+  height: 16px;
+}
+
+.typing .dot {
+  animation: mercuryTypingAnimation 1.8s infinite ease-in-out;
+  background-color: #8a2be2; /* rgba(20, 105, 69, 0.7); */
+  border-radius: 50%;
+  height: 4px;
+  margin-right: 4px;
+  vertical-align: middle;
+  width: 4px;
+  display: inline-block;
+}
+
+.typing .dot:nth-child(1) {
+  animation-delay: 200ms;
+}
+
+.typing .dot:nth-child(2) {
+  animation-delay: 300ms;
+}
+
+.typing .dot:nth-child(3) {
+  animation-delay: 400ms;
+}
+
+.typing .dot:last-child {
+  margin-right: 0;
+}
+
+@keyframes mercuryTypingAnimation {
+  0% {
+    transform: translateY(0px);
+    background-color: #6CAD96; /* rgba(20, 105, 69, 0.7); */
+  }
+  28% {
+    transform: translateY(-7px);
+    background-color: #9ECAB9; /* rgba(20, 105, 69, 0.4); */
+  }
+  44% {
+    transform: translateY(0px);
+    background-color: #B5D9CB; /* rgba(20, 105, 69, 0.2); */
+  }
+}

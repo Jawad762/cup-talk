@@ -1,0 +1,226 @@
+import { useParams } from 'react-router-dom';
+import { ImAttachment } from "react-icons/im";
+import { IoSend } from "react-icons/io5";
+import { shallowEqual, useDispatch, useSelector } from 'react-redux';
+import { RootState } from '../redux/store';
+import { User } from '../types';
+import AxiosInstance from '../Axios'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import ChatBubbleOne from './ChatBubbleOne';
+import ChatBubbleTwo from './ChatBubbleTwo';
+import { MessageType } from '../types';
+import { useEffect, useRef, useState } from 'react';
+import { Socket } from 'socket.io-client';
+import { ClientToServerEvents, ServerToClientEvents } from '../App';
+import PrivateRoomHeader from './PrivateRoomHeader';
+import GroupRoomHeader from './GroupRoomHeader';
+import TypingAnimation from './TypingAnimation';
+import { getCurrentTimestamp } from '../formatTime';
+import WarningModal from './WarningModal';
+import { addStrikes, logout } from '../redux/userSlice';
+import LoadingSpinner from './LoadingSpinner';
+import { uploadImageToFirebase } from '../uploadImageToFirebase';
+
+interface SocketProp {
+    socket: Socket<ServerToClientEvents, ClientToServerEvents>;
+}
+
+const Conversation = ({ socket }: SocketProp) => {
+
+    const axios = AxiosInstance()
+    const currentUser: User = useSelector((state: RootState) => state.user.user, shallowEqual)
+    const [messageText, setMessageText] = useState('')
+    const [isTyping, setIsTyping] = useState(false)
+    const [currentImage, setCurrentImage] = useState<null | string>(null)
+    const [imageLoading, setImageLoading] = useState(false)
+    const { id } = useParams()
+    const queryClient = useQueryClient()
+    const scrollBottomRef = useRef<HTMLDivElement>(null)
+    const convoRef = useRef(null)
+    const warningModalRef = useRef<HTMLDialogElement>(null)
+    const dispatch = useDispatch()
+
+    const findRoomInfo = async () => {
+        const res = await axios.get(`/api/user/find/${id}/${currentUser.userId}`)
+        return res.data
+    }
+
+    const getMessages = async () => {
+        const res = await axios.get(`/api/message/${id}`)
+        return res.data
+    }
+
+    const sendMessage = async () => {
+        if (messageText.length === 0 && currentImage === null) return
+        
+        if (messages.length > 0) {
+            queryClient.setQueryData(['messages', id], (prevMessages: Array<MessageType>) => {
+                const newMessage = { senderId: currentUser.userId, roomId: id, text: messageText, image: currentImage, date: getCurrentTimestamp(), messageId: prevMessages[prevMessages.length - 1].messageId + 1 }
+                return [...prevMessages, newMessage]
+            }) 
+        }
+        
+        setMessageText('')
+        setCurrentImage(null)
+        
+        await axios.post('/api/message/create', { senderId: currentUser.userId, roomId: id, text: messageText, image: currentImage })
+    }
+
+    const updateSeenStatus = async () => {
+        try {
+            await axios.put(`/api/message/updateStatus/${id}/${currentUser.userId}`)
+            queryClient.invalidateQueries({ queryKey: ['rooms'] })
+            socket.emit('messageStatusChange', id)
+        } catch (error) {
+            console.error(error)
+        }
+    }
+
+    const banUser = async () => {
+        try {
+            await axios.delete(`/api/user/ban/${currentUser.userId}`, { withCredentials: true })
+            dispatch(logout())
+            await axios.post('/api/auth/signout', {}, { withCredentials: true })
+        } catch (error) {
+            console.error(error)
+        }
+    }
+
+    const addUserStrikes = async () => {
+        warningModalRef.current?.showModal()
+        setTimeout(() => {
+            warningModalRef.current?.close()
+            dispatch(addStrikes())
+        }, 4000)
+        await axios.put(`/api/user/strike/${currentUser.userId}`)
+    }
+    
+    const { data: messages } = useQuery({ queryKey: ['messages', id], queryFn: getMessages })
+
+    const { data: roomInfo } = useQuery({ queryKey: ['roomInfo', id], queryFn: findRoomInfo })
+
+    const roomInfoWithoutCurrentUser = roomInfo?.filter((member: any) => member.userId !== currentUser.userId)
+    
+    const sendMessageMutation = useMutation({
+        mutationFn: sendMessage,
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ['messages', id] })
+          queryClient.invalidateQueries({ queryKey: ['rooms'] })
+          socket.emit('sendMessage')
+          scrollBottomRef.current?.scrollIntoView()
+        },
+      })
+    
+    const messagesWithNextAndPrevious = messages?.map((message: MessageType, index: number) => ({
+        ...message,
+        nextMessage: messages[index + 1] || null,
+        prevMessage: messages[index - 1] || null
+      }));
+
+      const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        setImageLoading(true)
+        const res = await uploadImageToFirebase(e.target.files?.[0] as File, 'messages/')
+        if (res === 'rejected') addUserStrikes()
+        else setCurrentImage(res)
+        setImageLoading(false)
+      }
+
+    useEffect(() => {
+        socket.emit('joinRoom', id);
+        
+        socket.on('receivedMessage', () => {
+            queryClient.invalidateQueries({ queryKey: ['messages'] })
+            scrollBottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+        })
+
+        socket.on('typing', () => {
+            setIsTyping(true)
+        })
+
+        socket.on('stopTyping', () => {
+            setIsTyping(false)
+        })
+
+        socket.on('userStatusChange', () => {
+            queryClient.invalidateQueries({ queryKey: ['roomInfo', id] })
+        })
+
+        socket.on('messageStatusChange', () => {
+            queryClient.invalidateQueries({ queryKey: ['messages', id] })
+            queryClient.invalidateQueries({ queryKey: ['rooms'] })
+        })
+        
+        return () => {
+            socket.emit('leaveRoom', id);
+        };
+    },[])
+
+    useEffect(() => {
+        if (document.visibilityState === 'visible' && messages?.filter((message:MessageType) => message.senderId !== currentUser.userId).every((message: MessageType) => message.seenBy?.includes(currentUser.userId as number)) === false) {
+            updateSeenStatus()
+        }
+    }, [messages])
+      
+    useEffect(() => {
+        scrollBottomRef.current?.scrollIntoView()
+    }, [messages, isTyping])
+    
+    useEffect(() => {
+        messageText.length === 0 ? socket.emit('stopTyping', id) : socket.emit('typing', id)
+    
+        const timeout = setTimeout(() => {
+            socket.emit('stopTyping', id);
+        }, 3000);
+    
+        return () => clearTimeout(timeout);
+    }, [messageText]);
+
+    useEffect(() => {
+        if (currentUser.strikes > 2) banUser() 
+    }, [currentUser.strikes])
+
+    if (!roomInfo) return (
+        <div className='flex justify-center w-full pt-16'>
+            <LoadingSpinner/>
+        </div>
+    )
+          
+  return (
+        <section ref={convoRef} className="w-full h-full max-h-screen flex flex-col text-white _bg-pattern-2 md:bg-transparent xl:max-w-[60%] pb-12 md:pb-0 xl:mx-10">
+            
+            {roomInfo[0].roomType === 'private' ?
+              <PrivateRoomHeader roomInfo={roomInfoWithoutCurrentUser}/>
+            : <GroupRoomHeader roomInfo={roomInfo} socket={socket}/>
+            }
+
+            <section id='conversation' className='h-full px-3 py-6 overflow-y-auto xl:px-6'>
+            {messagesWithNextAndPrevious?.map((message: MessageType) => (
+                message.senderId === currentUser.userId ?
+                    <ChatBubbleOne key={message.messageId} message={message} nextMessage={message.nextMessage} prevMessage={message.prevMessage} socket={socket} roomInfo={roomInfoWithoutCurrentUser}/> 
+                    : 
+                    <ChatBubbleTwo key={message.messageId} message={message} nextMessage={message.nextMessage} prevMessage={message.prevMessage}/>
+            ))}
+                {isTyping && <TypingAnimation/>}
+                <div ref={scrollBottomRef} className='w-1 h-1'></div>
+            </section>
+
+            <form onSubmit={(e) => {
+                e.preventDefault();
+                sendMessageMutation.mutate();
+                }} className='flex items-center mt-auto gap-4 px-3 py-4 max-h-[12.5%] border-t-2 border-purpleFour xl:px-6'>
+                <div>
+                    <label htmlFor='image'><ImAttachment className='text-2xl cursor-pointer'/></label>
+                    <input onChange={handleImageUpload} id='image' name='image' type='file' className='hidden'/>
+                </div>
+                {currentImage ? <img src={currentImage} className='w-8 h-8'/> : imageLoading && <LoadingSpinner/>}
+                <input value={messageText} onChange={(e) => setMessageText(e.target.value)} className='w-full bg-transparent outline-none' maxLength={180} placeholder='Type your message here...'></input>
+                <button type='submit'><IoSend className='text-2xl cursor-pointer'/></button>
+            </form>
+
+            <WarningModal modalRef={warningModalRef}/>
+
+        </section>
+  )
+}
+
+export default Conversation
