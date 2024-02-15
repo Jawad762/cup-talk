@@ -28,9 +28,12 @@ const ModalGroupTab = ({ parentRef, setIsFormSubmitted, socket } : Props) => {
     
     const handleSearch = async (e: React.ChangeEvent<HTMLInputElement>) => {
         try {
-            const searchText = e.target.value || ''
-            const { data } = await axios.get(`/api/user/search/${currentUser.userId}/${searchText}`)
-            setUsers(data)
+            const searchText = e.target.value
+            if (searchText.length > 0) {
+                const { data } = await axios.get(`/api/user/search/${currentUser.userId}/${searchText}`)
+                setUsers(data)
+            }
+            else setUsers([])
         } catch (error) {
             console.error(error)
         }
