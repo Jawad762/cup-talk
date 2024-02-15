@@ -83,7 +83,7 @@ const AddToGroupModal = ({ modalRef, socket }: Props) => {
                 </div>
 
                 {chosenMembers.size > 0 && 
-                <div className='flex flex-wrap items-center gap-3 max-h-32'>
+                <div className='flex flex-wrap items-center gap-3 overflow-y-auto max-h-32'>
                     {[...chosenMembers].map(member => (
                         <article className='flex items-center gap-1 px-2 py-1 text-sm rounded-full bg-purpleFour'>
                             <img className='object-cover w-6 h-6 rounded-full' src={member.profilePicture || profile}></img>

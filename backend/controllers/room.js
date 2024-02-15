@@ -76,12 +76,18 @@ export const createPrivateRoom = async (req, res) => {
     try {
         const { userOneId, userTwoId } = req.body;
         // if a room between these 2 already exists, return its id
+        const userIds = `${userOneId},${userTwoId}`
+        const reversedUserIds = `${userTwoId},${userOneId}`
         const [ doesRoomExist ] = await db.query(`
-         SELECT roomId FROM room_participants
-         WHERE userId IN (?,?)
-         GROUP BY roomId
-         HAVING COUNT(DISTINCT userId) = 2
-        `, [userOneId, userTwoId])
+         SELECT
+         rp.roomId,
+         GROUP_CONCAT(rp.userId) as userIds,
+         rooms.type
+         FROM room_participants as rp
+         JOIN rooms on rooms.roomId = rp.roomId
+         WHERE rooms.type = 'private'
+         GROUP BY roomId HAVING userIds = ? OR userIds = ?
+        `, [userIds, reversedUserIds])
         if (doesRoomExist.length > 0) return res.status(200).json(doesRoomExist[0].roomId)
         // if not, create a new room and add them to it
         const [ room ] = await db.query(`INSERT INTO rooms VALUES(DEFAULT)`)

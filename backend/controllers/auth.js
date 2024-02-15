@@ -14,7 +14,7 @@ export const signup = async (req, res) => {
         req.session.userId = user[0].userId
 
         // automatically add user to the global chat
-        await db.query(`INSERT INTO room_participants (roomId, userId) VALUES (?,?)`,[39, user[0].userId])
+        await db.query(`INSERT INTO room_participants (roomId, userId) VALUES (?,?)`,[1, user[0].userId])
         
         res.status(200).json(user[0])
     } catch (error) {

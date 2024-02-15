@@ -32,7 +32,7 @@ const Sidebar = ({ socket }: SocketProp) => {
     }
     
   return (
-    <aside className="fixed bottom-0 z-50 flex justify-between flex-none w-full h-12 text-lg text-white md:items-center bg-purpleDark md:static md:flex-col md:w-16 md:rounded-l-xl md:py-5 md:h-full md:text-2xl md:bg-purpleFour">
+    <aside className="fixed bottom-0 z-50 flex justify-between flex-none w-full h-12 text-xl text-white md:items-center bg-purpleDark md:static md:flex-col md:w-16 md:rounded-l-xl md:py-5 md:h-full md:text-2xl md:bg-purpleFour">
         <div className='relative hidden w-12 h-12 mt-1 rounded-full md:block shrink-0 grow-0'>
             <img src={currentUser.profilePicture || profile} className='absolute object-cover w-full h-full rounded-full'></img>
         </div>
