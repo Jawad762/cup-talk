@@ -16,9 +16,5 @@ export const formatTime = (date: Date) => {
 export const getCurrentTimestamp = () => {
   const dateObject = new Date();
 
-  const timezoneOffset = dateObject.getTimezoneOffset();
-
-  dateObject.setMinutes(dateObject.getMinutes() - timezoneOffset);
-
   return dateObject
 }
