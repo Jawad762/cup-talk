@@ -1,12 +1,12 @@
 export const formatTime = (date: Date) => {
-    const dateObject = new Date(date);
+  const dateObject = new Date(date);
 
-    const options: Intl.DateTimeFormatOptions = {
-      hour: '2-digit',
-      minute: '2-digit',
-    };
+  const options: Intl.DateTimeFormatOptions = {
+    hour: '2-digit',
+    minute: '2-digit',
+  };
 
-    return dateObject.toLocaleString('en-US', options);
+  return dateObject.toLocaleString('en-US', options);
 }
 
 export const getCurrentTimestamp = () => {
