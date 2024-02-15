@@ -71,7 +71,7 @@ const ChatBubbleOne = ({ message, nextMessage, prevMessage, socket, roomInfo } :
         <div className={`px-2 py-2 min-w-24 rounded-xl text-white bg-purpleFour`}>
           {Boolean(message.isDeleted) === false ? 
           <>
-          <p className="break-all">{message.text}</p> 
+          <p className="break-words">{message.text}</p> 
           {message.image && <img src={message.image} onClick={() => openImageModal.current?.showModal()} className="my-2 rounded-lg cursor-pointer"/>}
           <div className="flex items-center gap-2">
             <p className='text-[0.5rem] text-slate-300 ml-auto'>{formatTime(message.date)}</p>

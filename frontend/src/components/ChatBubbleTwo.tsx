@@ -30,7 +30,7 @@ const ChatBubbleTwo = ({ message, nextMessage, prevMessage } : ChatBubbleTwoProp
           <h5 className="text-[0.7rem] text-purpleFour">{message.username}</h5>
           {Boolean(message.isDeleted) === false ? (
             <div>
-              <p className="break-all">{message.text}</p>
+              <p className="break-words">{message.text}</p>
               {message.image && <img src={message.image} className="my-2 rounded-lg cursor-pointer" onClick={() => modalRef.current?.showModal()}/>}
               <p className={`text-[0.5rem] text-end`}>{formatTime(message.date)}</p>
             </div>
