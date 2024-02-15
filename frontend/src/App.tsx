@@ -111,7 +111,7 @@ function App() {
       setTimeout(() => {
         setShowAnimation(false)
         sessionStorage.setItem('animationShown', 'true')
-      }, 333500)
+      }, 3500)
     }
   }, [])
 
