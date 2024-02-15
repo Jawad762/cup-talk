@@ -12,16 +12,16 @@ export const getConversationMessages = async (req, res) => {
         messages.image,
         messages.roomId,
         messages.isDeleted,
-        messages.date,
+        DATE_FORMAT(messages.date, '%Y-%m-%d %H:%i:%s') AS date,
         users.username,
         users.profilePicture AS userProfilePicture,
         GROUP_CONCAT(seen_messages.seenBy) AS seenBy
-        FROM messages
-        JOIN users on users.userId = messages.senderId
-        LEFT JOIN seen_messages on seen_messages.messageId = messages.messageId
-        WHERE roomId = ?
-        GROUP BY messages.messageId
-        ORDER BY messages.date ASC
+      FROM messages
+      JOIN users ON users.userId = messages.senderId
+      LEFT JOIN seen_messages ON seen_messages.messageId = messages.messageId
+      WHERE roomId = ?
+      GROUP BY messages.messageId
+      ORDER BY messages.date ASC;
         `, [ roomId ])
 
         const decryptedData = data.map(message => {
