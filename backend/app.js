@@ -22,7 +22,7 @@ const app = express()
 const server = http.createServer(app)
 const ioServer = new Server(server, {
     cors: {
-        origin: ['http://localhost:8000'],
+        origin: ['https://cuptalk.onrender.com'],
         methods: ["GET", "POST"],
         transports: ['websocket'],
         credentials: true,
