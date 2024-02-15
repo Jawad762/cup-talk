@@ -5,11 +5,11 @@ html, body, #root {
     width: 100%;
     margin: 0;
     padding: 0;
+    overflow-y: hidden;
 }
 
 body {
     font-family: 'Nunito Sans', sans-serif;
-    overflow-y: hidden;
 }
 
 ._bg-pattern {
