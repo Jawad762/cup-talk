@@ -28,7 +28,7 @@ const ModalMessageTab = ({ parentRef, setIsFormSubmitted, socket } : Props) => {
     
     const handleSearch = async (e: React.ChangeEvent<HTMLInputElement>) => {
         try {
-            const searchText = e.target.value
+            const searchText = e.target.value || ''
             const { data } = await axios.get(`/api/user/search/${currentUser.userId}/${searchText}`)
             data && setUsers(data)
         } catch (error) {
