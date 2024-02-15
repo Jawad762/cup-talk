@@ -9,6 +9,7 @@ html, body, #root {
 
 body {
     font-family: 'Nunito Sans', sans-serif;
+    overflow-y: hidden;
 }
 
 ._bg-pattern {
