@@ -60,7 +60,7 @@ ioServer.on('connection', socket => {
     })
 })
 
-app.use(express.static(path.join(__dirname, '/dist')))
+app.use(express.static(path.join(__dirname, 'dist')))
 app.use(express.json())
 app.use(cookieParser())
 
@@ -88,7 +88,7 @@ app.use('/api/user', verifySession, userRoutes)
 app.use('/api/room', verifySession, roomRoutes)
 app.use('/api/auth', authRoutes)
 app.get('*', (_, res) => {
-    res.sendFile(path.join(__dirname, '/dist', 'index.html'));
+    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
 server.listen(8000, () => {
