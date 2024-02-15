@@ -30,7 +30,7 @@ const ModalGroupTab = ({ parentRef, setIsFormSubmitted, socket } : Props) => {
         try {
             const searchText = e.target.value
             const { data } = await axios.get(`/api/user/search/${currentUser.userId}/${searchText}`)
-            setUsers(data)
+            data && setUsers(data)
         } catch (error) {
             console.error(error)
         }
