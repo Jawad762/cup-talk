@@ -6,7 +6,7 @@ import { MdOutlineInfo } from "react-icons/md";
 import { LuUser2 } from "react-icons/lu";
 import defaultPfp from '../../public/pfp-default.jpg'
 import { MdPhotoCamera } from "react-icons/md";
-import { updateDescriptionState, updateUsernameState, logout, addStrikes } from '../redux/userSlice';
+import { updateDescriptionState, updateUsernameState, logout, addStrikes, setUser } from '../redux/userSlice';
 import AxiosInstance from '../Axios'
 import axios from 'axios';
 import { useEffect, useRef, useState } from 'react';
@@ -77,6 +77,7 @@ const Profile = ({ socket }: SocketProp) => {
     const updateProfile = async (url: string) => {
         try {
             await axiosInstance.put(`/api/user/updateProfile/${currentUser.userId}`, { profilePicture: url }, { withCredentials: true })
+            dispatch(setUser({...currentUser, profilePicture: url}))
             queryClient.invalidateQueries({ queryKey: ['profileUser', id]})
         } catch (error) {
             console.error(error)

@@ -37,7 +37,7 @@ export const userSlice = createSlice({
       state.currentPassword = action.payload || ''
     },
     setUser: (state, action: PayloadAction<User>) => {
-      state.user = {...action.payload}
+      state.user = action.payload
     },
     setStatus: (state, action: PayloadAction<usernameStatus>) => {
       state.usernameStatus = action.payload

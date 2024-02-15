@@ -90,7 +90,7 @@ export const createPrivateRoom = async (req, res) => {
         `, [userIds, reversedUserIds])
         if (doesRoomExist.length > 0) return res.status(200).json(doesRoomExist[0].roomId)
         // if not, create a new room and add them to it
-        const [ room ] = await db.query(`INSERT INTO rooms VALUES(DEFAULT)`)
+        const [ room ] = await db.query(`INSERT INTO rooms (roomId, type) VALUES(DEFAULT, 'private')`)
         const roomId = room.insertId
         await db.query(`INSERT INTO room_participants (roomId, userId) VALUES (?, ?), (?, ?)`, [roomId, userOneId, roomId, userTwoId])
         res.status(200).json(roomId);
