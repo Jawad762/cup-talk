@@ -28,6 +28,6 @@ export function decryptMessage(message) {
         return decryptedMessage;
     } catch (error) {
         console.error("Decryption error:", error);
-        throw error;
+        return message
     }
 }
