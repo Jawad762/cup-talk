@@ -8,7 +8,7 @@ export const formatTime = (date: Date) => {
 
     const timezoneOffset = dateObject.getTimezoneOffset();
 
-    dateObject.setMinutes(dateObject.getMinutes() - timezoneOffset);
+    dateObject.setMinutes(dateObject.getMinutes() + timezoneOffset);
 
     return dateObject.toLocaleString('en-US', options);
 }
