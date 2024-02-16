@@ -15,7 +15,7 @@ const WarningModal = ({ modalRef } : Props) => {
   return (
     <dialog ref={modalRef} className='p-4 outline-none text-white shadow-xl w-[80%] md:w-1/2 lg:w-1/3 text-sm rounded-lg bg-[#252837]'>
         {strikes === 1 && <p className='pb-2'>You after being warned about inappropriate pictures:</p>}
-        <img src={strikeImages[strikes]} className='object-cover w-full'></img>
+        <img src={strikeImages[strikes]} className='object-cover w-full' alt='meme images'></img>
         <p className='pt-2'>Strike: {strikes + 1} / 3</p>
     </dialog>
   )

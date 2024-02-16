@@ -147,7 +147,7 @@ const Profile = ({ socket }: SocketProp) => {
     <section className="_bg-pattern-2 items-center w-full md:max-w-[70%] lg:max-w-[50%] py-10 h-full px-4 md:px-10 flex flex-col text-white md:rounded-r-xl">
         
         <div className='relative grid w-40 h-40 rounded-full place-items-center'>
-            <img src={profileUser?.profilePicture || defaultPfp} className='absolute object-cover object-center w-full h-full rounded-full'></img>
+            <img src={profileUser?.profilePicture || defaultPfp} alt='profile-picture' className='absolute object-cover object-center w-full h-full rounded-full'></img>
             {profileUser?.userId === currentUser.userId && (
                 <>
                     <label htmlFor='profile' className='z-50 grid overflow-hidden translate-x-full translate-y-full rounded-full cursor-pointer w-14 h-14 place-items-center bg-purpleFour'>

@@ -81,7 +81,7 @@ const ModalGroupTab = ({ parentRef, setIsFormSubmitted, socket } : Props) => {
                             setChosenMembers(prev => new Set(prev).add(user))
                             divRef.current?.blur()
                         }} className='flex items-center gap-3 p-1 rounded-full cursor-pointer hover:bg-purpleFour'>
-                            <img className='object-cover w-10 h-10 rounded-full' src={user.profilePicture || profile}></img>
+                            <img alt='profile-picture' className='object-cover w-10 h-10 rounded-full' src={user.profilePicture || profile}></img>
                             <p>{user.username}</p>
                         </article>
                     ))}
@@ -92,7 +92,7 @@ const ModalGroupTab = ({ parentRef, setIsFormSubmitted, socket } : Props) => {
             <div className='flex flex-wrap items-center gap-3 overflow-y-auto max-h-32'>
                 {[...chosenMembers].map(member => (
                     <article className='flex items-center gap-1 px-2 py-1 text-sm rounded-full bg-purpleFour'>
-                        <img className='object-cover w-6 h-6 rounded-full' src={member.profilePicture || profile}></img>
+                        <img alt='profile-picture' className='object-cover w-6 h-6 rounded-full' src={member.profilePicture || profile}></img>
                         <p>{member.username}</p>
                         <button type='button' onClick={() => setChosenMembers(prev => {
                             const newSet = new Set(prev)

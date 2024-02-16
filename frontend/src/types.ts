@@ -21,6 +21,10 @@ export type MessageType = {
     seenBy: number[]
     username: string
     userProfilePicture: string
+    parentId: number
+    parentText: string
+    parentImage: string
+    parentUsername: string
 };
 
 export type RoomInfo = {
@@ -29,6 +33,7 @@ export type RoomInfo = {
     username: string
     userProfilePicture: string
     userStatus: string
-    type: string
-    
+    roomType: string
+    groupName: string
+    groupProfilePicture: string
 }

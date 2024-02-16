@@ -20,6 +20,7 @@ import WarningModal from './WarningModal';
 import { addStrikes, logout } from '../redux/userSlice';
 import LoadingSpinner from './LoadingSpinner';
 import { uploadImageToFirebase } from '../uploadImageToFirebase';
+import { BsImageFill } from 'react-icons/bs';
 
 interface SocketProp {
     socket: Socket<ServerToClientEvents, ClientToServerEvents>;
@@ -33,6 +34,7 @@ const Conversation = ({ socket }: SocketProp) => {
     const [isTyping, setIsTyping] = useState(false)
     const [currentImage, setCurrentImage] = useState<null | string>(null)
     const [imageLoading, setImageLoading] = useState(false)
+    const [replyMessage, setReplyMessage] = useState<MessageType | null>(null)
     const { id } = useParams()
     const queryClient = useQueryClient()
     const scrollBottomRef = useRef<HTMLDivElement>(null)
@@ -55,15 +57,17 @@ const Conversation = ({ socket }: SocketProp) => {
         
         if (messages.length > 0) {
             queryClient.setQueryData(['messages', id], (prevMessages: Array<MessageType>) => {
-                const newMessage = { senderId: currentUser.userId, roomId: id, text: messageText, image: currentImage, date: getCurrentTimestamp(), messageId: prevMessages[prevMessages.length - 1].messageId + 1 }
+                console.log(prevMessages)
+                const newMessage = { senderId: currentUser.userId, roomId: id, text: messageText, image: currentImage, date: getCurrentTimestamp(), messageId: prevMessages[prevMessages.length - 1].messageId + 1, parentId: replyMessage?.messageId, parentUsername: replyMessage?.username, parentText: replyMessage?.text, parentImage: replyMessage?.image }
                 return [...prevMessages, newMessage]
             }) 
         }
         
         setMessageText('')
         setCurrentImage(null)
+        setReplyMessage(null)
         
-        await axios.post('/api/message/create', { senderId: currentUser.userId, roomId: id, text: messageText, image: currentImage })
+        await axios.post('/api/message/create', { senderId: currentUser.userId, roomId: id, text: messageText, image: currentImage, parentId: replyMessage?.messageId })
     }
 
     const updateSeenStatus = async () => {
@@ -99,7 +103,9 @@ const Conversation = ({ socket }: SocketProp) => {
 
     const { data: roomInfo } = useQuery({ queryKey: ['roomInfo', id], queryFn: findRoomInfo })
 
-    const roomInfoWithoutCurrentUser = roomInfo?.filter((member: any) => member.userId !== currentUser.userId)
+    const roomInfoWithoutCurrentUser = roomInfo?.length >= 2 ?
+     roomInfo?.filter((member: any) => member.userId !== currentUser.userId)
+     : roomInfo
     
     const sendMessageMutation = useMutation({
         mutationFn: sendMessage,
@@ -110,6 +116,11 @@ const Conversation = ({ socket }: SocketProp) => {
           scrollBottomRef.current?.scrollIntoView()
         },
       })
+
+    const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        sendMessageMutation.mutate()
+    }
     
     const messagesWithNextAndPrevious = messages?.map((message: MessageType, index: number) => ({
         ...message,
@@ -117,13 +128,13 @@ const Conversation = ({ socket }: SocketProp) => {
         prevMessage: messages[index - 1] || null
       }));
 
-      const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         setImageLoading(true)
         const res = await uploadImageToFirebase(e.target.files?.[0] as File, 'messages/')
         if (res === 'rejected') addUserStrikes()
         else setCurrentImage(res)
         setImageLoading(false)
-      }
+    }
 
     useEffect(() => {
         socket.emit('joinRoom', id);
@@ -179,6 +190,10 @@ const Conversation = ({ socket }: SocketProp) => {
         if (currentUser.strikes > 2) banUser() 
     }, [currentUser.strikes])
 
+    useEffect(() => {
+       return () => setReplyMessage(null) 
+    }, [id])
+
     if (!roomInfo) return (
         <div className='flex justify-center w-full pt-16'>
             <LoadingSpinner/>
@@ -198,21 +213,27 @@ const Conversation = ({ socket }: SocketProp) => {
                 message.senderId === currentUser.userId ?
                     <ChatBubbleOne key={message.messageId} message={message} nextMessage={message.nextMessage} prevMessage={message.prevMessage} socket={socket} roomInfo={roomInfoWithoutCurrentUser}/> 
                     : 
-                    <ChatBubbleTwo key={message.messageId} message={message} nextMessage={message.nextMessage} prevMessage={message.prevMessage}/>
+                    <ChatBubbleTwo key={message.messageId} message={message} setReplyMessage={setReplyMessage} nextMessage={message.nextMessage} prevMessage={message.prevMessage}/>
             ))}
                 {isTyping && <TypingAnimation/>}
                 <div ref={scrollBottomRef} className='w-1 h-1'></div>
             </section>
-
-            <form onSubmit={(e) => {
-                e.preventDefault();
-                sendMessageMutation.mutate();
-                }} className='flex items-center mt-auto gap-4 px-3 py-4 max-h-[12.5%] border-t-2 border-purpleFour xl:px-6'>
+            
+            
+            <form onSubmit={handleFormSubmit} className='flex relative items-center mt-auto gap-4 px-3 py-4 max-h-[12.5%] border-t-2 border-purpleFour xl:px-6'>
+                <div className={`absolute bg-[#252837] flex items-center justify-between rounded-md border-l-4 border-purpleFour -top-1 text-center transition-all ease-in-out -translate-y-full ${replyMessage ? 'h-14 p-2 inset-x-1' : 'h-0 overflow-hidden'}`}>
+                    <div>
+                        <p className='text-sm text-left'>Replying to <span className='text-purpleFour'>{replyMessage?.username}:</span></p>
+                        <p className='text-sm text-left line-clamp-1'>{replyMessage?.text}</p>
+                        {replyMessage?.image && !replyMessage.text && <BsImageFill/>}  
+                    </div>
+                    <button type='button' onClick={() => setReplyMessage(null)} className='mr-2 hover:text-red-600'>&#x2716;</button>
+                </div>
                 <div>
                     <label htmlFor='image'><ImAttachment className='text-2xl cursor-pointer'/></label>
                     <input onChange={handleImageUpload} id='image' name='image' type='file' className='hidden'/>
                 </div>
-                {currentImage ? <img src={currentImage} className='w-8 h-8'/> : imageLoading && <LoadingSpinner/>}
+                {currentImage ? <img src={currentImage} alt='message-image' className='w-8 h-8'/> : imageLoading && <LoadingSpinner/>}
                 <input value={messageText} onChange={(e) => setMessageText(e.target.value)} className='w-full bg-transparent outline-none' maxLength={180} placeholder='Type your message here...'></input>
                 <button type='submit'><IoSend className='text-2xl cursor-pointer'/></button>
             </form>

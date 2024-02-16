@@ -14,7 +14,7 @@ const PrivateRoomHeader = ({ roomInfo }: PrivateRoomHeaderProps) => {
     <section className='flex justify-between shadow-xl max-h-[12.5%] py-2 items-center px-4 border-b-2 border-purpleFour'>
         <div className='flex items-center gap-3'>
             <div className='relative w-12 h-12 rounded-full shrink-0 grow-0'>
-                <img onClick={() => navigate(`/profile/${roomInfo[0].userId}`)} src={roomInfo[0].userProfilePicture || profile} className='absolute object-cover w-full h-full rounded-full'></img>
+                <img onClick={() => navigate(`/profile/${roomInfo[0].userId}`)} alt="profile picture" src={roomInfo[0].userProfilePicture || profile} className='absolute object-cover w-full h-full rounded-full'></img>
             </div>
             <article>
                 <p className='text-lg font-bold'>{roomInfo[0].username}</p>

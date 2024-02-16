@@ -4,30 +4,40 @@ import db from '../db.js'
 export const getConversationMessages = async (req, res) => {
     try {
         const { roomId } = req.params
-        const [ data ] = await db.query(`
+        const [data] = await db.query(`
         SELECT
-        messages.messageId,
-        messages.senderId,
-        messages.text,
-        messages.image,
-        messages.roomId,
-        messages.isDeleted,
-        DATE_FORMAT(messages.date, '%Y-%m-%d %H:%i:%s') AS date,
-        users.username,
-        users.profilePicture AS userProfilePicture,
-        GROUP_CONCAT(seen_messages.seenBy) AS seenBy
-      FROM messages
-      JOIN users ON users.userId = messages.senderId
-      LEFT JOIN seen_messages ON seen_messages.messageId = messages.messageId
-      WHERE roomId = ?
-      GROUP BY messages.messageId
-      ORDER BY messages.date ASC;
-        `, [ roomId ])
+            messages.messageId,
+            messages.senderId,
+            messages.text,
+            messages.image,
+            messages.roomId,
+            messages.isDeleted,
+            DATE_FORMAT(messages.date, '%Y-%m-%d %H:%i:%s') AS date,
+            messageUsers.username,
+            messageUsers.profilePicture AS userProfilePicture,
+            GROUP_CONCAT(seen_messages.seenBy) AS seenBy,
+            parentMessages.senderId as parentSender,
+            parentMessages.messageId as parentId,
+            parentMessages.text as parentText,
+            parentMessages.image as parentImage,
+            parentUsers.username as parentUsername
+        FROM messages
+        JOIN users as messageUsers ON messageUsers.userId = messages.senderId
+        LEFT JOIN seen_messages ON seen_messages.messageId = messages.messageId
+        LEFT JOIN messages as parentMessages ON parentMessages.messageId = messages.parentId
+        LEFT JOIN users as parentUsers ON parentUsers.userId = parentMessages.senderId
+        WHERE messages.roomId = ?
+        GROUP BY messages.messageId
+        ORDER BY messages.date ASC;
+    `, [roomId]);
+    
+    
 
         const decryptedData = data.map(message => {
             return {
                 ...message,
                 text: decryptMessage(message.text),
+                parentText: decryptMessage(message.parentText),
                 seenBy: message.seenBy?.split(',').map(userId => Number(userId))
             }
         })
@@ -40,9 +50,9 @@ export const getConversationMessages = async (req, res) => {
 
 export const createMessage = async (req, res) => {
     try {
-        const { senderId, roomId, text, image } = req.body
+        const { senderId, roomId, text, image, parentId } = req.body
         const encryptedMessage = encryptMessage(text)
-        await db.query('INSERT INTO messages (senderId, roomId, text, image) VALUES (?, ?, ?, ?)' , [senderId, roomId, encryptedMessage, image])
+        await db.query('INSERT INTO messages (senderId, roomId, text, image, parentId) VALUES (?, ?, ?, ?, ?)' , [senderId, roomId, encryptedMessage, image, parentId])
         res.status(200).json('Message sent successfully')
     } catch (error) {
         console.error(error)

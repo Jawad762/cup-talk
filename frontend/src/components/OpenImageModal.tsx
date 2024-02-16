@@ -12,7 +12,7 @@ const OpenImageModal = ({ modalRef, imageSrc }: Props) => {
             <a href={imageSrc} download><IoMdDownload/></a>
             <button onClick={() => modalRef.current?.close()}><IoMdClose/></button>
         </div>
-        <img src={imageSrc} className="object-cover max-w-[100%] mx-auto"></img>
+        <img src={imageSrc} alt="message-image" className="object-cover max-w-[100%] mx-auto"></img>
     </dialog>
   )
 }

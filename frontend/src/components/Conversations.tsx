@@ -87,7 +87,7 @@ const Conversations = ({ socket }: SocketProp) => {
   return (
     <section id='conversations' className={`w-full max-h-full overflow-x-hidden _bg-pattern-2 md:max-w-[70%] lg:max-w-[50%] xl:max-w-[30%] flex flex-col rounded-r-xl text-white ${id && 'hidden xl:block'}`}>
 
-        <img src={logo} className='mx-auto h-28 w-28 md:hidden'></img>
+        <img src={logo} alt='logo' className='mx-auto h-28 w-28 md:hidden'></img>
 
         <div>
           <div className="flex items-center gap-3 px-6 md:py-6 md:mt-0">
@@ -106,7 +106,7 @@ const Conversations = ({ socket }: SocketProp) => {
         .map((room: roomType) => (
             <div onClick={() => navigate(`/${room.roomId}`)} key={room.roomId} className={`flex items-center px-2 py-3 ml-4 mt-3 gap-3 rounded-xl cursor-pointer hover:bg-purpleFour relative ${room.roomId === Number(id) && 'bg-purpleFour'}`}>
                 <div className='relative w-12 h-12 rounded-full shrink-0 grow-0'>
-                    <img src={room.type === 'private' ? room.userProfilePicture || profile : room.groupProfilePicture || profile} className='absolute object-cover w-full h-full rounded-full'></img>
+                    <img alt='profile-picture' src={room.type === 'private' ? room.userProfilePicture || profile : room.groupProfilePicture || profile} className='absolute object-cover w-full h-full rounded-full'></img>
                 </div>
                 <article className='w-full pr-4'>
                   <div className="flex items-center justify-between">

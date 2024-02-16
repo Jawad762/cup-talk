@@ -1,9 +1,9 @@
 import express from 'express'
-import { composeMessage, createMessage, deleteMessage, getConversationMessages, updateSeenStatus } from '../controllers/message.js'
+import { composeMessage, createMessage, deleteMessage,  getConversationMessages, updateSeenStatus } from '../controllers/message.js'
 
 const router = express.Router()
 
-// get user messages
+// get room messages
 router.get('/:roomId', getConversationMessages)
 
 // send message (Directly from the room)

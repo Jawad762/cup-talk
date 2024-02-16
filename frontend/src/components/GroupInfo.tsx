@@ -105,7 +105,7 @@ const GroupInfo = () => {
     <section className='_bg-pattern-2 w-full md:max-w-[70%] lg:max-w-[50%] pt-6 pb-12 md:pb-0 h-full px-4 md:px-10 flex gap-3 flex-col text-white md:rounded-r-xl'>
       
       <div className='relative w-40 h-40 mx-auto rounded-full shrink-0'>
-        <img className='absolute object-cover w-full h-full rounded-full' src={roomInfo?.[0].groupProfilePicture || defaultPfp}/>
+        <img alt='profile-picture' className='absolute object-cover w-full h-full rounded-full' src={roomInfo?.[0].groupProfilePicture || defaultPfp}/>
         <label htmlFor='profile' className='absolute bottom-0 right-0 z-50 grid rounded-full cursor-pointer w-14 h-14 place-items-center bg-purpleFour'>
             {!imageLoading && <MdPhotoCamera className='text-3xl'/>}
             {imageLoading && <LoadingSpinner/>}
@@ -131,7 +131,7 @@ const GroupInfo = () => {
         {roomInfo?.map((member: any) => (
           <Link to={`/profile/${member.userId}`} key={member.userId} className='flex items-center gap-3 p-2 rounded-full cursor-pointer hover:bg-purpleHover'>
             <div className='relative w-12 h-12 rounded-full'>
-              <img className='absolute object-cover w-full h-full rounded-full' src={member.userProfilePicture || defaultPfp}/>
+              <img alt='profile-picture' className='absolute object-cover w-full h-full rounded-full' src={member.userProfilePicture || defaultPfp}/>
             </div>
             <p>{member.username}</p>
           </Link>

@@ -38,7 +38,7 @@ const Explore = () => {
       {users && users.map((user: User) => (
           <Link to={`/profile/${user.userId}`} key={user.userId} className="flex items-center gap-4 p-3 mb-2 rounded-full hover:bg-purpleFour">
             <div className='relative w-12 h-12 rounded-full shrink-0 grow-0'>
-                <img src={user.profilePicture || profile} className='absolute object-cover w-full h-full rounded-full'></img>
+                <img alt='profile-picture' src={user.profilePicture || profile} className='absolute object-cover w-full h-full rounded-full'></img>
             </div>
             <p>{user.username}</p>
           </Link>
