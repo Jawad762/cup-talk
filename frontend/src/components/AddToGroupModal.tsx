@@ -27,7 +27,7 @@ const AddToGroupModal = ({ modalRef, socket }: Props) => {
   
   const handleSearch = async (e: React.ChangeEvent<HTMLInputElement>) => {
       try {
-          const searchText = e.target.value
+          const searchText = e.target.value.trim()
           if (searchText.length > 0) {
             const { data } = await axios.get(`/api/user/search/${currentUser.userId}/${searchText}`)
             setUsers(data)

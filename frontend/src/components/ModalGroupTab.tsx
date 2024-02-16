@@ -28,7 +28,7 @@ const ModalGroupTab = ({ parentRef, setIsFormSubmitted, socket } : Props) => {
     
     const handleSearch = async (e: React.ChangeEvent<HTMLInputElement>) => {
         try {
-            const searchText = e.target.value
+            const searchText = e.target.value.trim()
             if (searchText.length > 0) {
                 const { data } = await axios.get(`/api/user/search/${currentUser.userId}/${searchText}`)
                 setUsers(data)
@@ -69,7 +69,7 @@ const ModalGroupTab = ({ parentRef, setIsFormSubmitted, socket } : Props) => {
         <form onSubmit={handleCreateGroup} className='relative space-y-4 text-sm outline-none'>
             <div className='text-sm'>
                 <label className='block mb-1'>Group Name</label>
-                <input name='group-name' minLength={1} className='w-full px-2 py-1.5 bg-transparent border-2 border-gray-500 rounded-md outline-none focus:border-white'/>
+                <input name='group-name' minLength={1} maxLength={45} className='w-full px-2 py-1.5 bg-transparent border-2 border-gray-500 rounded-md outline-none focus:border-white'/>
             </div>
             
             <div ref={divRef} className='group' tabIndex={0}>
