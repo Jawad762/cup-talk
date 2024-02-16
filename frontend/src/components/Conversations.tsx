@@ -110,7 +110,7 @@ const Conversations = ({ socket }: SocketProp) => {
                 </div>
                 <article className='w-full pr-4'>
                   <div className="flex items-center justify-between">
-                    <p className="font-bold text-white">{room.name || room.usernames?.[0]}</p>
+                    <p className="font-bold text-white line-clamp-1">{room.name || room.usernames?.[0]}</p>
                     <span className="text-sm">{formatTime(room.lastMessageDate)}</span>
                   </div>
                   <div className={`text-sm flex items-center break-all opacity-75 ${Boolean(room.lastMessageIsDeleted) === true && 'italic'}`}>
