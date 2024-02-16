@@ -125,12 +125,10 @@ export const banUser = async (req, res) => {
     try {
         const { userId } = req.params
 
-        await Promise.all([
-            await db.query(`DELETE FROM seen_messages WHERE messageId IN (SELECT messageId FROM messages WHERE senderId = ?)`, [userId]),
-            await db.query(`DELETE FROM messages WHERE senderId = ?`, [userId]),
-            await db.query(`DELETE FROM room_participants WHERE userId = ?`, [userId]),
-            await db.query(`DELETE FROM users WHERE userId = ?`, [userId])
-        ])
+        await db.query(`DELETE FROM seen_messages WHERE messageId IN (SELECT messageId FROM messages WHERE senderId = ?)`, [userId]),
+        await db.query(`DELETE FROM messages WHERE senderId = ?`, [userId]),
+        await db.query(`DELETE FROM room_participants WHERE userId = ?`, [userId]),
+        await db.query(`DELETE FROM users WHERE userId = ?`, [userId])
 
         res.status(200).json('Banned')
     } catch (error) {
