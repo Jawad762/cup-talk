@@ -35,7 +35,7 @@ const Profile = ({ socket }: SocketProp) => {
     const [imageLoading, setImageLoading] = useState(false)
     const usernameInputRef = useRef<HTMLInputElement>(null)
     const descriptionInputRef = useRef<HTMLTextAreaElement>(null)
-    const id = useParams().id || currentUser.userId
+    const id = useParams().id
     const queryClient = useQueryClient()
     const navigate = useNavigate()
     const warningModalRef = useRef<HTMLDialogElement>(null)
@@ -65,7 +65,8 @@ const Profile = ({ socket }: SocketProp) => {
         if (res === 'rejected') addUserStrikes()
         else updateProfile(res)
         setImageLoading(false)
-      }
+        e.target.value = ''
+    }
 
     const findProfileUser = async () => {
         const res = await axiosInstance.get(`/api/user/${id}`)
@@ -78,7 +79,6 @@ const Profile = ({ socket }: SocketProp) => {
         try {
             await axiosInstance.put(`/api/user/updateProfile/${currentUser.userId}`, { profilePicture: url }, { withCredentials: true })
             dispatch(setUser({...currentUser, profilePicture: url}))
-            queryClient.invalidateQueries({ queryKey: ['profileUser', id]})
         } catch (error) {
             console.error(error)
         }
@@ -91,7 +91,7 @@ const Profile = ({ socket }: SocketProp) => {
             const username = form.get('username')
             if (username !== currentUser.username) {
                 await axiosInstance.put(`/api/user/updateUsername/${currentUser.userId}`, { username }, { withCredentials: true })
-                username && typeof username === 'string' && dispatch(updateUsernameState(username))
+                username && dispatch(updateUsernameState(username as string))
             }
             setIsUsernameInputDisabled(true)
             setUsernameError(null)
@@ -110,7 +110,7 @@ const Profile = ({ socket }: SocketProp) => {
             const description = form.get('description')
             if (description !== currentUser.description) {
                 await axiosInstance.put(`/api/user/updateDescription/${currentUser.userId}`, { description }, { withCredentials: true })
-                description && typeof description === 'string' && dispatch(updateDescriptionState(description))
+                description && dispatch(updateDescriptionState(description as string))
             }
             setIsDescriptionInputDisabled(true)
         } catch (error) {
@@ -147,8 +147,8 @@ const Profile = ({ socket }: SocketProp) => {
     <section className="_bg-pattern-2 items-center w-full md:max-w-[70%] lg:max-w-[50%] py-10 h-full px-4 md:px-10 flex flex-col text-white md:rounded-r-xl">
         
         <div className='relative grid w-40 h-40 rounded-full place-items-center'>
-            <img src={profileUser?.profilePicture || defaultPfp} alt='profile-picture' className='absolute object-cover object-center w-full h-full rounded-full'></img>
-            {profileUser?.userId === currentUser.userId && (
+            <img src={currentUser.userId === Number(id) ? currentUser.profilePicture || defaultPfp : profileUser?.profilePicture || defaultPfp} alt='profile-picture' className='absolute object-cover object-center w-full h-full rounded-full'></img>
+            {currentUser.userId === Number(id) && (
                 <>
                     <label htmlFor='profile' className='z-50 grid overflow-hidden translate-x-full translate-y-full rounded-full cursor-pointer w-14 h-14 place-items-center bg-purpleFour'>
                         {!imageLoading && <MdPhotoCamera className='text-3xl'/>}
@@ -160,8 +160,8 @@ const Profile = ({ socket }: SocketProp) => {
         </div>
         
         <div className='flex items-center gap-2 mt-4 text-xl'>
-            <p className='capitalize'>{profileUser?.status}</p>
-            <span className={`inline-block w-2 h-2 rounded-full ${profileUser?.status === 'online' ? 'bg-purpleFour' : 'bg-red-600' }`}></span>
+            <p className='capitalize'>{currentUser.userId === Number(id) ? currentUser.status : profileUser?.status}</p>
+            <span className={`inline-block w-2 h-2 rounded-full ${currentUser.userId === Number(id) ? currentUser.status === 'online' ? 'bg-purpleFour' : 'bg-red-600' : profileUser?.status === 'online' ? 'bg-purpleFour' : 'bg-red-600' }`}></span>
         </div>
         
         <div className='flex items-center w-full gap-4 pb-4 mt-10 border-b border-slate-400'>
@@ -172,14 +172,14 @@ const Profile = ({ socket }: SocketProp) => {
                 <div className='flex justify-between w-full'>
                     <input
                         ref={usernameInputRef}
-                        id='username' name='username' defaultValue={profileUser?.username}
+                        id='username' name='username' defaultValue={currentUser.userId === Number(id) ? currentUser.username : profileUser?.username}
                         className='w-full pb-1 mr-2 text-lg bg-transparent outline-none focus:border-b border-purpleFour' 
                         disabled={isUsernameInputDisabled ? true : false}>
                      </input>
                     {!isUsernameInputDisabled && <button type='submit'><FaCheck className='text-2xl cursor-pointer text-purpleFour'/></button>}
                 </div>
             </form>
-            {isUsernameInputDisabled && profileUser?.userId === currentUser.userId && <button type='button' onClick={() => setIsUsernameInputDisabled(false)}><MdEdit className='mt-auto text-2xl cursor-pointer text-purpleFour'/></button>}
+            {isUsernameInputDisabled && currentUser.userId === Number(id) && <button type='button' onClick={() => setIsUsernameInputDisabled(false)}><MdEdit className='mt-auto text-2xl cursor-pointer text-purpleFour'/></button>}
         </div>
         
         <div className='flex items-center w-full gap-4 mt-4'>
@@ -190,17 +190,17 @@ const Profile = ({ socket }: SocketProp) => {
                     <TextareaAutosize
                        ref={descriptionInputRef}
                        minRows={1} maxRows={5} maxLength={180} 
-                       id='description' name='description' defaultValue={profileUser?.description} 
+                       id='description' name='description' defaultValue={currentUser.userId === Number(id) ? currentUser.description : profileUser?.description} 
                        className='w-full pb-1 mr-2 text-lg bg-transparent outline-none resize-none focus:border-b border-purpleFour' 
                        disabled={isDescriptionInputDisabled ? true : false}>
                     </TextareaAutosize>
                     {!isDescriptionInputDisabled && <button type='submit'><FaCheck className='text-2xl cursor-pointer text-purpleFour'/></button>}
                 </div>
             </form>
-            {isDescriptionInputDisabled && profileUser?.userId === currentUser.userId && <button type='button' onClick={() => setIsDescriptionInputDisabled(false)}><MdEdit className='mt-auto text-2xl cursor-pointer text-purpleFour'/></button>}
+            {isDescriptionInputDisabled && currentUser.userId === Number(id) && <button type='button' onClick={() => setIsDescriptionInputDisabled(false)}><MdEdit className='mt-auto text-2xl cursor-pointer text-purpleFour'/></button>}
         </div>
 
-        {profileUser?.userId !== currentUser.userId && (
+        {!profileUser?.userId || profileUser.userId !== currentUser.userId && (
             <div className='w-full mt-4'>
                 <button onClick={handleOpenChat} className='px-6 py-2 rounded-full shadow-lg bg-purpleFour hover:bg-purpleHover'>Chat with {profileUser?.username}</button>
             </div>

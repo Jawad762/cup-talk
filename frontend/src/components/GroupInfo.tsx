@@ -81,6 +81,7 @@ const GroupInfo = () => {
       if (res === 'rejected') addUserStrikes()
       else uploadProfilePicture(res)
       setImageLoading(false)
+      e.target.value = ''
   }
 
   const uploadProfilePicture = async (profilePicture: string) => {

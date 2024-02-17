@@ -1,7 +1,7 @@
 import { useSelector } from "react-redux"
 import { MessageType, RoomInfo, User } from "../types"
 import { RootState } from "../redux/store"
-import { useRef, useState } from "react"
+import { useRef } from "react"
 import { IoMdMore } from "react-icons/io"
 import { PiChecksBold } from "react-icons/pi";
 import DeleteMsgModal from "./DeleteMsgModal"
@@ -27,7 +27,6 @@ const ChatBubbleOne = ({ message, nextMessage, prevMessage, socket, roomInfo } :
     const copiedMessageModalRef = useRef<HTMLDialogElement>(null)
     const deleteMessageModalRef = useRef<HTMLDialogElement>(null)
     const openImageModal = useRef<HTMLDialogElement>(null)
-    const [showOptions, setShowOptions] = useState(false)
 
     const handleCopyText = async () => {
       await navigator.clipboard.writeText(message.text)
@@ -78,13 +77,13 @@ const ChatBubbleOne = ({ message, nextMessage, prevMessage, socket, roomInfo } :
         </div>
 
         {Boolean(message.isDeleted) === false && (
-        <div onClick={() => setShowOptions(true)} onBlur={() => setTimeout(() => {setShowOptions(false)}, 100)} className="relative">
+        <div className="relative group">
           
           <button className="inline-flex items-center self-center p-2 font-medium text-center rounded-lg hover:bg-gray-800 focus:ring-2 focus:outline-none dark:text-white focus:ring-gray-50" type="button">
             <IoMdMore/>
           </button>
           
-          <div className={`absolute z-10 w-40 left-0 bg-white divide-y divide-gray-100 rounded-lg shadow top-1/2 ${showOptions ? 'block' : 'hidden'}`}>
+          <div className={`absolute z-10 w-40 left-0 bg-white divide-y divide-gray-100 rounded-lg shadow top-1/2 hidden group-focus-within:block`}>
               <ul className="py-2 text-sm text-gray-700 ">
                 <li>
                     <button onClick={handleCopyText} className="block w-full px-4 py-2 text-left hover:bg-gray-100">Copy</button>

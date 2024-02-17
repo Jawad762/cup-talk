@@ -17,7 +17,7 @@ import axios from 'axios'
 import { Socket, io } from 'socket.io-client'
 import GroupInfo from './components/GroupInfo'
 import LoadingPage from './components/Loading'
-import { logout, setAuth } from './redux/userSlice'
+import { logout, setAuth, setUserOnlineStatus } from './redux/userSlice'
 
 export interface ServerToClientEvents {
     receivedMessage: () => void;
@@ -55,6 +55,7 @@ function App() {
   const GeneralLayout = () => {
 
     const updateUserStatus = async (status: string) => {
+      dispatch(setUserOnlineStatus(status))
       await axios.put(`/api/user/updateStatus/${userId}`, { status }, { withCredentials: true });
       socket.emit('userStatusChange');
     };

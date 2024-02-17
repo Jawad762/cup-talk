@@ -71,7 +71,7 @@ const ModalMessageTab = ({ parentRef, setIsFormSubmitted, socket } : Props) => {
     <form onSubmit={handleComposeMessage} className='relative space-y-4 text-sm outline-none'>
         <div className='text-sm'>
             <label className='block mb-1'>Text</label>
-            <input name='message-text' type='text' minLength={1} className='w-full px-2 py-1.5 bg-transparent border-2 border-gray-500 rounded-md outline-none focus:border-white'/>
+            <input name='message-text' type='text' minLength={1} maxLength={200} className='w-full px-2 py-1.5 bg-transparent border-2 border-gray-500 rounded-md outline-none focus:border-white'/>
         </div>
         
         <div ref={divRef} className='group' tabIndex={0}>

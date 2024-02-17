@@ -134,6 +134,7 @@ const Conversation = ({ socket }: SocketProp) => {
         if (res === 'rejected') addUserStrikes()
         else setCurrentImage(res)
         setImageLoading(false)
+        e.target.value = ''
     }
 
     useEffect(() => {
@@ -234,7 +235,7 @@ const Conversation = ({ socket }: SocketProp) => {
                     <input onChange={handleImageUpload} id='image' name='image' type='file' className='hidden'/>
                 </div>
                 {currentImage ? <img src={currentImage} alt='message-image' className='w-8 h-8'/> : imageLoading && <LoadingSpinner/>}
-                <input value={messageText} onChange={(e) => setMessageText(e.target.value)} className='w-full bg-transparent outline-none' maxLength={180} placeholder='Type your message here...'></input>
+                <input value={messageText} onChange={(e) => setMessageText(e.target.value)} className='w-full bg-transparent outline-none' maxLength={200} placeholder='Type your message here...'></input>
                 <button type='submit'><IoSend className='text-2xl cursor-pointer'/></button>
             </form>
 

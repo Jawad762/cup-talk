@@ -74,10 +74,13 @@ export const userSlice = createSlice({
           strikes: state.user.strikes + 1
         }
       };
+    },
+    setUserOnlineStatus: (state, action: PayloadAction<string>) => {
+      state.user.status = action.payload
     }
   },
 })
 
-export const { changeUsername, changePassword, setUser, setStatus, clearAllInput, setAuth, logout, updateUserPfp, updateUsernameState, updateDescriptionState, addStrikes } = userSlice.actions
+export const { changeUsername, changePassword, setUser, setStatus, clearAllInput, setAuth, logout, updateUserPfp, updateUsernameState, updateDescriptionState, addStrikes, setUserOnlineStatus } = userSlice.actions
 
 export default userSlice.reducer
