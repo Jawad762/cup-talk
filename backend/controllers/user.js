@@ -69,7 +69,7 @@ export const findUsersFromRoom = async (req, res) => {
 
 export const updateProfilePicture = async (req, res) => {
     try {
-        const { userId } = req.params
+        const userId = req.session.userId
         const { profilePicture } = req.body
         await db.query('UPDATE users SET profilePicture = ? WHERE userId = ?', [profilePicture, userId])
         res.status(200).json('Changes saved successfully!')
@@ -80,7 +80,7 @@ export const updateProfilePicture = async (req, res) => {
 
 export const updateUsername = async (req, res) => {
     try {
-        const { userId } = req.params
+        const userId = req.session.userId
         const { username } = req.body
         const [ isUsernameTaken ] = await db.query('SELECT * FROM users WHERE username = ?', [username])
         if (isUsernameTaken.length > 0) return res.status(400).json('An account with this username already exists.')
@@ -93,7 +93,7 @@ export const updateUsername = async (req, res) => {
 
 export const updateDescription = async (req, res) => {
     try {
-        const { userId } = req.params
+        const userId = req.session.userId
         const { description } = req.body
         await db.query('UPDATE users SET description = ? WHERE userId = ?', [description, userId])
         res.status(200).json('Changes saved successfully!')
@@ -115,7 +115,7 @@ export const searchUsers = async (req, res) => {
 
 export const updateOnlineStatus = async (req, res) => {
     try {
-        const { userId } = req.params
+        const userId = req.session.userId
         const { status } = req.body
         await db.query('UPDATE users SET status = ? WHERE userId = ?', [status, userId])
         res.status(200).end()
@@ -126,7 +126,7 @@ export const updateOnlineStatus = async (req, res) => {
 
 export const banUser = async (req, res) => {
     try {
-        const { userId } = req.params
+        const userId = req.session.userId
         await Promise.all([
             await db.query(`DELETE FROM seen_messages WHERE messageId IN (SELECT messageId FROM messages WHERE senderId = ?) OR seenBy = ?`, [userId, userId]),
             await db.query(`DELETE FROM messages WHERE senderId = ?`, [userId]),
@@ -142,7 +142,7 @@ export const banUser = async (req, res) => {
 
 export const addUserStrikes = async (req, res) => {
     try {
-        const { userId } = req.params
+        const userId = req.session.userId
         const [ data ] = await db.query('UPDATE users SET strikes = strikes + 1 WHERE userId = ?', [userId])
         res.status(200).json(data)
     } catch (error) {

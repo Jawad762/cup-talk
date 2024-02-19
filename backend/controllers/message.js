@@ -50,7 +50,8 @@ export const getConversationMessages = async (req, res) => {
 
 export const createMessage = async (req, res) => {
     try {
-        const { senderId, roomId, text, image, parentId } = req.body
+        const { roomId, text, image, parentId } = req.body
+        const senderId = req.session.userId
         const encryptedMessage = encryptMessage(text)
         await db.query('INSERT INTO messages (senderId, roomId, text, image, parentId) VALUES (?, ?, ?, ?, ?)' , [senderId, roomId, encryptedMessage, image, parentId])
         res.status(200).json('Message sent successfully')
@@ -93,7 +94,8 @@ export const updateSeenStatus = async (req, res) => {
 
 export const composeMessage = async (req, res) => {
     try {
-        const { messageText, senderId, receiverId } = req.body
+        const { messageText, receiverId } = req.body
+        const senderId = req.session.userId
         const encryptedMessage = encryptMessage(messageText)
         const user_ids = `${senderId},${receiverId}`
         const reversed_user_ids = `${receiverId},${senderId}`

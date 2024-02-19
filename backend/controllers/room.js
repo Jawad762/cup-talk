@@ -7,7 +7,7 @@ export const findUserRooms = async (req, res) => {
     const mysqlTimestamp = currentDate.toISOString().slice(0, 19).replace("T", " ")
     
     try {
-        const { userId } = req.params;
+        const userId = req.session.userId;
         const [data] = await db.query(`
         SELECT
         rooms.roomId,
@@ -141,7 +141,7 @@ export const updateGroupProfilePicture = async (req, res) => {
 export const exitGroup = async (req, res) => {
     try {
         const { roomId } = req.params
-        const { userId } = req.session.userId
+        const userId = req.session.userId
         await db.query(`DELETE FROM room_participants WHERE roomId = ? AND userId = ?`, [roomId, userId])
         res.status(200).json('Left group.')
     } catch (error) {
