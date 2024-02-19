@@ -1,5 +1,7 @@
 import db from '../db.js'
 import webPush from 'web-push'
+import dotenv from 'dotenv';
+dotenv.config();
 
 export const checkUsername = async (req, res) => {
     try {
