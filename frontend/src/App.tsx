@@ -51,7 +51,7 @@ function App() {
   const [showAnimation, setShowAnimation] = useState(false)
   
   // connect to socket
-  const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io('http://localhost:8000', { withCredentials: true })
+  const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io('https://cuptalk.onrender.com', { withCredentials: true })
 
   const GeneralLayout = () => {
 
@@ -72,7 +72,7 @@ function App() {
     };
 
     useEffect(() => {
-      Notification.permission !== 'granted' && enableNotificationsModalRef.current?.showModal()
+      'Notification' in window && Notification.permission !== 'granted' && enableNotificationsModalRef.current?.showModal()
     },[])
 
     useEffect(() => {
