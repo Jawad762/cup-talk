@@ -140,7 +140,8 @@ export const updateGroupProfilePicture = async (req, res) => {
 
 export const exitGroup = async (req, res) => {
     try {
-        const { roomId, userId } = req.params
+        const { roomId } = req.params
+        const { userId } = req.session.userId
         await db.query(`DELETE FROM room_participants WHERE roomId = ? AND userId = ?`, [roomId, userId])
         res.status(200).json('Left group.')
     } catch (error) {
