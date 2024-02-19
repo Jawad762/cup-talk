@@ -112,6 +112,7 @@ const Conversation = ({ socket }: SocketProp) => {
     const sendMessageMutation = useMutation({
         mutationFn: sendMessage,
         onSuccess: () => {
+          // invalidating the queries because setQueryData isn't working when there are no messages in the room yet
           queryClient.invalidateQueries({ queryKey: ['messages', id] })
           queryClient.invalidateQueries({ queryKey: ['rooms'] })
           scrollBottomRef.current?.scrollIntoView()
