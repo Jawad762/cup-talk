@@ -1,5 +1,5 @@
 import express from 'express'
-import { findUser, updateDescription, updateProfilePicture, updateUsername, searchUsers, findUsersFromRoom, updateOnlineStatus, banUser, addUserStrikes } from '../controllers/user.js'
+import { findUser, updateDescription, updateProfilePicture, updateUsername, searchUsers, findUsersFromRoom, updateOnlineStatus, banUser, addUserStrikes, subscribeUser, sendNotification } from '../controllers/user.js'
 const router = express.Router()
 
 // find user
@@ -28,5 +28,10 @@ router.put('/strike/:userId', addUserStrikes)
 
 // ban user
 router.delete('/ban/:userId', banUser)
+
+// subscribe user to notifications
+router.post('/subscribe', subscribeUser)
+
+router.post('/sendNotification', sendNotification)
 
 export default router

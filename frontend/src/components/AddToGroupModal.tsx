@@ -104,7 +104,7 @@ const AddToGroupModal = ({ modalRef, socket }: Props) => {
                     <button type='submit' className='px-6 py-1 rounded-md bg-purpleFour hover:bg-purpleHover disabled:opacity-50 disabled:cursor-not-allowed' disabled={chosenMembers.size === 0}>Add To Group</button>
                     <button type='button' onClick={() => {
                         modalRef.current?.close()
-                    }} className='px-6 py-1 ml-4 bg-gray-500 rounded-md'>Cancel</button>
+                    }} className='px-6 py-1 ml-4 bg-gray-500 rounded-md hover:bg-gray-600'>Cancel</button>
                 </div>
             </form>                 
         </dialog>

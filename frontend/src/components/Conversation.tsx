@@ -57,7 +57,6 @@ const Conversation = ({ socket }: SocketProp) => {
         
         if (messages.length > 0) {
             queryClient.setQueryData(['messages', id], (prevMessages: Array<MessageType>) => {
-                console.log(prevMessages)
                 const newMessage = { senderId: currentUser.userId, roomId: id, text: messageText, image: currentImage, date: getCurrentTimestamp(), messageId: prevMessages[prevMessages.length - 1].messageId + 1, parentId: replyMessage?.messageId, parentUsername: replyMessage?.username, parentText: replyMessage?.text, parentImage: replyMessage?.image }
                 return [...prevMessages, newMessage]
             }) 
@@ -67,7 +66,9 @@ const Conversation = ({ socket }: SocketProp) => {
         setCurrentImage(null)
         setReplyMessage(null)
         
-        await axios.post('/api/message/create', { senderId: currentUser.userId, roomId: id, text: messageText, image: currentImage, parentId: replyMessage?.messageId })
+        await axios.post('/api/message/create', { senderId: currentUser.userId, roomId: id, text: messageText, image: currentImage, parentId: replyMessage?.messageId }),
+        socket.emit('sendMessage')
+        await axios.post('/api/user/sendNotification', { title: `${currentUser.username} sent you a new message!`, description: messageText, roomId: id })
     }
 
     const updateSeenStatus = async () => {
@@ -103,6 +104,7 @@ const Conversation = ({ socket }: SocketProp) => {
 
     const { data: roomInfo } = useQuery({ queryKey: ['roomInfo', id], queryFn: findRoomInfo })
 
+    // to handle cases where the current user is the only member of a group and we cant filter through him
     const roomInfoWithoutCurrentUser = roomInfo?.length >= 2 ?
      roomInfo?.filter((member: any) => member.userId !== currentUser.userId)
      : roomInfo
@@ -110,9 +112,7 @@ const Conversation = ({ socket }: SocketProp) => {
     const sendMessageMutation = useMutation({
         mutationFn: sendMessage,
         onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: ['messages', id] })
           queryClient.invalidateQueries({ queryKey: ['rooms'] })
-          socket.emit('sendMessage')
           scrollBottomRef.current?.scrollIntoView()
         },
       })

@@ -1,4 +1,5 @@
 import db from '../db.js'
+import webPush from 'web-push'
 
 export const checkUsername = async (req, res) => {
     try {
@@ -144,5 +145,60 @@ export const addUserStrikes = async (req, res) => {
         res.status(200).json(data)
     } catch (error) {
         console.error(error)
+    }
+}
+
+export const subscribeUser = async (req, res) => {
+    try {
+        const userId = req.session.userId
+        const { subscription } = req.body
+        const [ data ] = await db.query('SELECT subscription FROM subscriptions WHERE userId = ?', [userId])
+        if (data.length > 0) await db.query('UPDATE subscriptions set subscription = ? WHERE userId = ?', [JSON.stringify(subscription), userId])
+        else await db.query('INSERT INTO subscriptions (userId, subscription) VALUES (?, ?)', [userId, JSON.stringify(subscription)])
+        res.status(200).json('success')
+    } catch (error) {
+        console.error(error)
+        res.status(500).json('Something went wrong while trying to subscribe')
+    }
+}
+
+export const sendNotification = async (req, res) => {
+    try {
+        const userId = req.session.userId
+        const options = {
+            vapidDetails: {
+              subject: 'https://cuptalk.onrender.com',
+              publicKey: process.env.VAPID_PUBLIC_KEY,
+              privateKey: process.env.VAPID_PRIVATE_KEY,
+            },
+        };
+        const { title, description, roomId } = req.body
+        const [ usersToNotify ] = await db.query(`SELECT userId FROM room_participants WHERE roomId = ? AND userId != ?`, [roomId, userId])
+        
+        const allPromises = usersToNotify.map(async (user) => {
+            const [ subscriptionResult ] = await db.query('SELECT subscription FROM subscriptions WHERE userId = ?', [user.userId]);
+            return JSON.parse(subscriptionResult[0].subscription);
+        });
+
+        const subscriptions = await Promise.all(allPromises)
+
+        const sendNotification = subscriptions.map(async (sub) => {
+            await webPush.sendNotification (
+                sub,
+                JSON.stringify({
+                  title,
+                  description,
+                  image: '/logo.svg'
+                }),
+                options
+              );
+        })
+
+        await Promise.all(sendNotification)
+
+        res.sendStatus(200)
+    } catch (error) {
+        console.error(error)
+        res.status(500).json('Something went wrong')
     }
 }

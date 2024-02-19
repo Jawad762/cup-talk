@@ -31,6 +31,7 @@ export type roomType = {
   lastMessageSeenBy: number[];
   lastMessageSenderId: number;
   lastMessageIsDeleted: boolean;
+  lastMessageId: number
 };
 
 const Conversations = ({ socket }: SocketProp) => {
@@ -60,10 +61,6 @@ const Conversations = ({ socket }: SocketProp) => {
     })
 
     socket.on('deletedMessage', () => {
-      queryClient.invalidateQueries({ queryKey: ['rooms'] })
-    })
-
-    socket.on('messageStatusChange', () => {
       queryClient.invalidateQueries({ queryKey: ['rooms'] })
     })
 
@@ -100,7 +97,7 @@ const Conversations = ({ socket }: SocketProp) => {
         </div>
 
         {rooms?.length === 0 && <p className='mx-auto mt-10'>Click the + to connect with people!</p>}
-        
+    
         <div className='flex-grow pb-12 mr-2 md:pb-4'>
         {rooms?.filter((room:roomType) => room.usernames?.[0].toLowerCase().includes(searchText.toLowerCase()) || room.name?.toLowerCase().includes(searchText.toLowerCase()))
         .map((room: roomType) => (
@@ -110,12 +107,12 @@ const Conversations = ({ socket }: SocketProp) => {
                 </div>
                 <article className='w-full pr-4'>
                   <div className="flex items-center justify-between">
-                    <p className="font-bold text-white line-clamp-1">{room.name || room.usernames?.[0]}</p>
+                    <p className="w-2/3 font-bold text-white line-clamp-1">{room.name || room.usernames?.[0]}</p>
                     <span className="text-sm">{formatTime(room.lastMessageDate)}</span>
                   </div>
                   <div className={`text-sm flex items-center break-all opacity-75 ${Boolean(room.lastMessageIsDeleted) === true && 'italic'}`}>
                     <p className='line-clamp-1 max-w-[95%] pr-2'>{Boolean(room.lastMessageIsDeleted) === true ? 'This message was deleted' : room.lastMessageText ? room.lastMessageText : room.lastMessageImage && <BsFillImageFill/>}</p>
-                    {(room.lastMessageSenderId !== currentUser.userId && !room.lastMessageSeenBy?.includes(currentUser.userId as number)) && <span className='inline-block w-2 h-2 rounded-full bg-purpleFour'></span>}
+                    {(room.lastMessageId !== null && room.lastMessageSenderId !== currentUser.userId && !room.lastMessageSeenBy?.includes(currentUser.userId as number)) && <span className='inline-block w-2 h-2 rounded-full bg-purpleFour'></span>}
                   </div>
                 </article>
             </div>

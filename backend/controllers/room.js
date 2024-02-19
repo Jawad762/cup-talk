@@ -4,7 +4,7 @@ import db from "../db.js";
 export const findUserRooms = async (req, res) => {
     // this timestamp is for groups with no messages yet, so they can have a date next to them
     const currentDate = new Date();
-    const mysqlTimestamp = currentDate.toISOString().slice(0, 19).replace("T", " ") + "Z";
+    const mysqlTimestamp = currentDate.toISOString().slice(0, 19).replace("T", " ")
     
     try {
         const { userId } = req.params;

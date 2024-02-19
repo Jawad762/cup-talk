@@ -108,7 +108,7 @@ const ModalGroupTab = ({ parentRef, setIsFormSubmitted, socket } : Props) => {
                 <button type='button' onClick={() => {
                     parentRef.current?.close()
                     setSearchParams('')
-                }} className='px-6 py-1 ml-4 bg-gray-500 rounded-md'>Cancel</button>
+                }} className='px-6 py-1 ml-4 bg-gray-500 rounded-md hover:bg-gray-600'>Cancel</button>
             </div>
         </form>      
       )

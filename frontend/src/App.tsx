@@ -1,6 +1,6 @@
 import './App.css'
 import { createBrowserRouter, Navigate, Outlet, RouterProvider } from 'react-router-dom'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Signin from './components/Signin'
 import Signup from './components/Signup'
 import { useDispatch, useSelector } from 'react-redux'
@@ -18,6 +18,7 @@ import { Socket, io } from 'socket.io-client'
 import GroupInfo from './components/GroupInfo'
 import LoadingPage from './components/Loading'
 import { logout, setAuth, setUserOnlineStatus } from './redux/userSlice'
+import EnableNotifications from './components/EnableNotifications'
 
 export interface ServerToClientEvents {
     receivedMessage: () => void;
@@ -50,9 +51,11 @@ function App() {
   const [showAnimation, setShowAnimation] = useState(false)
   
   // connect to socket
-  const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io('https://cuptalk.onrender.com', { withCredentials: true })
+  const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io('http://localhost:8000', { withCredentials: true })
 
   const GeneralLayout = () => {
+
+    const enableNotificationsModalRef = useRef<HTMLDialogElement>(null)
 
     const updateUserStatus = async (status: string) => {
       dispatch(setUserOnlineStatus(status))
@@ -67,6 +70,10 @@ function App() {
         updateUserStatus('online');
       }
     };
+
+    useEffect(() => {
+      Notification.permission !== 'granted' && enableNotificationsModalRef.current?.showModal()
+    },[])
 
     useEffect(() => {
       if (userId) {
@@ -84,6 +91,7 @@ function App() {
       <main className='flex w-full h-full p-0 md:p-4 bg-[#100023]'>
         <Sidebar socket={socket}/>
         <Outlet/>
+        <EnableNotifications modalRef={enableNotificationsModalRef}/>
       </main>
     )
   }
