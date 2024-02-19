@@ -112,6 +112,7 @@ const Conversation = ({ socket }: SocketProp) => {
     const sendMessageMutation = useMutation({
         mutationFn: sendMessage,
         onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ['messages', id] })
           queryClient.invalidateQueries({ queryKey: ['rooms'] })
           scrollBottomRef.current?.scrollIntoView()
         },
