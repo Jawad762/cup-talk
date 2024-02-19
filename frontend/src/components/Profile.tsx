@@ -174,7 +174,8 @@ const Profile = ({ socket }: SocketProp) => {
                         ref={usernameInputRef}
                         id='username' name='username' defaultValue={currentUser.userId === Number(id) ? currentUser.username : profileUser?.username}
                         className='w-full pb-1 mr-2 text-lg bg-transparent outline-none focus:border-b border-purpleFour' 
-                        disabled={isUsernameInputDisabled ? true : false}>
+                        disabled={isUsernameInputDisabled ? true : false}
+                        maxLength={15} minLength={4}>
                      </input>
                     {!isUsernameInputDisabled && <button type='submit'><FaCheck className='text-2xl cursor-pointer text-purpleFour'/></button>}
                 </div>
