@@ -64,7 +64,8 @@ export const createMessage = async (req, res) => {
 export const deleteMessage = async (req, res) => {
     try {
         const { messageId } = req.params
-        await db.query(`UPDATE messages SET isDeleted = true WHERE messageId = ?`, [messageId])
+        const userId = req.session.userId
+        await db.query(`UPDATE messages SET isDeleted = true WHERE messageId = ? AND senderId = ?`, [messageId, userId])
         res.status(200).json('Message deleted successfully')
     } catch (error) {
         res.status(500).json(error)
