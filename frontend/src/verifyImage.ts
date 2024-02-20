@@ -7,7 +7,7 @@ export const verifyImage =  async (url: string) => {
               'url': url,
               'workflow': 'wfl_fHwO1XapP8qv7jmyOfYgw',
               'api_user': '176776132',
-              'api_secret': '4TnKYo4KyMXXc7VVyin5NzAej6MzcDnc',
+              'api_secret': import.meta.env.VITE_SIGHTENGINE_SECRET_KEY,
             }
           })          
 

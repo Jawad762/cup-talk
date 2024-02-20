@@ -1,7 +1,7 @@
 import { initializeApp } from "firebase/app";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBM7WiuyDSFcj8HF2T951LQXVyEvpE0ZGg",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: "cup-talk.firebaseapp.com",
   projectId: "cup-talk",
   storageBucket: "cup-talk.appspot.com",
