@@ -25,7 +25,7 @@ const Sidebar = ({ socket }: SocketProp) => {
             await axios.put(`/api/user/updateStatus/${currentUser.userId}`, { status: 'offline' }, { withCredentials: true });
             dispatch(logout())
             await axios.post('/api/auth/signout', {}, { withCredentials: true })
-            socket.emit('userStatusChange');
+            socket.emit('userStatusChange', 'offline');
         } catch (error) {
             console.error(error)
         }

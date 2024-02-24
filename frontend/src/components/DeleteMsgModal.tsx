@@ -1,37 +1,31 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import AxiosInstance from '../Axios'
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { Socket } from 'socket.io-client';
 import { ClientToServerEvents, ServerToClientEvents } from '../App';
 import { MessageType } from "../types";
+import { roomType } from "./Conversations";
 
 type ModalProps = {
-    selectedMessageId: number | null
+    selectedMessage: MessageType
     socket: Socket<ServerToClientEvents, ClientToServerEvents>
     modalRef: React.RefObject<HTMLDialogElement>
 }
 
-const DeleteMsgModal = ({ selectedMessageId, socket, modalRef } : ModalProps) => {
+const DeleteMsgModal = ({ selectedMessage, socket, modalRef } : ModalProps) => {
 
     const axios = AxiosInstance()
     const { id } = useParams()
     const queryClient = useQueryClient()
     const [isSubmitted, setIsSubmitted] = useState(false)
 
-    useEffect(() => {
-        socket.on('deletedMessage', () => {
-            queryClient.invalidateQueries({ queryKey: ['rooms'] })
-            queryClient.invalidateQueries({ queryKey: ['messages', id]})
-        })  
-    }, [])
-
     const deleteMessage = async () => {
         try {
             queryClient.setQueryData(['messages', id], (prevMessages: Array<MessageType>) => {
                                 
                 const newMessages = prevMessages.map(message => {
-                    if (message.messageId === selectedMessageId) {
+                    if (message.messageId === selectedMessage.messageId) {
                         return {
                             ...message,
                             isDeleted: 1
@@ -41,6 +35,21 @@ const DeleteMsgModal = ({ selectedMessageId, socket, modalRef } : ModalProps) =>
                 })
                 return newMessages
             })
+
+            queryClient.setQueryData(['rooms'], (prevRooms: roomType[]) => {
+                const newRooms = prevRooms?.map(room => {
+                  if (room.roomId === Number(selectedMessage.roomId) && room.lastMessageId === selectedMessage.messageId) {
+                    return {
+                      ...room,
+                      lastMessageIsDeleted: 1,
+                    }
+                  }
+                  else return room
+                })
+                return newRooms
+              })
+
+            socket.emit('deleteMessage', selectedMessage)
             
             setIsSubmitted(true)
             setTimeout(() => {
@@ -49,20 +58,15 @@ const DeleteMsgModal = ({ selectedMessageId, socket, modalRef } : ModalProps) =>
             }, 1000)
             
             // its a put request because we're not actually deleting it, we're simply modifying the isDeleted column
-            const res = await axios.put(`/api/message/delete/${selectedMessageId}`)
+            const res = await axios.put(`/api/message/delete/${selectedMessage.messageId}`)
             return res.data
         } catch (error) {
             console.error(error)
-        } finally {
-            socket.emit('deleteMessage', id)
         }
     }
 
     const deleteMessageMutation = useMutation({
         mutationFn: deleteMessage,
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['rooms'] })
-        }
     })
     
     if (isSubmitted) return (

@@ -43,17 +43,17 @@ const ModalMessageTab = ({ parentRef, setIsFormSubmitted, socket } : Props) => {
         e.preventDefault()
         try {
             const form = new FormData(e.currentTarget)
-            const messageText = form.get('message-text')
-            if (!messageText) return
-            const { data } = await axios.post('/api/message/compose', { messageText, senderId: currentUser.userId, receiverId: recipient?.userId})
-            const { roomId } = data
+            const messageText = form.get('message-text') as string
+            if (!messageText || messageText.trim().length < 1) return
+            const { data: message } = await axios.post('/api/message/compose', { messageText, senderId: currentUser.userId, receiverId: recipient?.userId})
+            const roomId = message.roomId
             setIsFormSubmitted(true)
             setTimeout(() => {
                 parentRef.current?.close()
                 navigate(`/${roomId}`)
                 cleanup()
             }, 1000)
-            socket.emit('sendMessage')
+            socket.emit('sendMessage', message)
         } catch (error) {
             console.error(error)
         } finally {

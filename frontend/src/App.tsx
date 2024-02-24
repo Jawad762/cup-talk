@@ -19,25 +19,26 @@ import GroupInfo from './components/GroupInfo'
 import LoadingPage from './components/Loading'
 import { logout, setAuth, setUserOnlineStatus } from './redux/userSlice'
 import EnableNotifications from './components/EnableNotifications'
+import { MessageType } from './types'
 
 export interface ServerToClientEvents {
-    receivedMessage: () => void;
+    receivedMessage: (message: any) => void;
     typing: () => void;
     stopTyping: () => void;
-    userStatusChange: () => void;
-    messageStatusChange: () => void;
-    deletedMessage: () => void
+    userStatusChange: (status: string) => void;
+    messageStatusChange: (seenById: number) => void;
+    deletedMessage: (message: MessageType) => void
     addedToGroup: () => void
 }
   
 export interface ClientToServerEvents {
-    userStatusChange: () => void;
-    sendMessage: () => void;
-    messageStatusChange: (id: string | undefined) => void;
+    userStatusChange: (status: string) => void;
+    sendMessage: (message: any) => void;
+    messageStatusChange: (id: string | undefined, seenById: number) => void;
     joinRoom: (id: string | undefined) => void;
     typing: (id: string | undefined) => void;
     stopTyping: (id: string | undefined) => void;
-    deleteMessage: (id: string | undefined) => void;
+    deleteMessage: (message: MessageType) => void;
     leaveRoom: (id: string | undefined) => void
     addToGroup: () => void
 }
@@ -55,12 +56,14 @@ function App() {
 
   const GeneralLayout = () => {
 
+    console.log(Notification.permission)
+
     const enableNotificationsModalRef = useRef<HTMLDialogElement>(null)
 
     const updateUserStatus = async (status: string) => {
       dispatch(setUserOnlineStatus(status))
       await axios.put(`/api/user/updateStatus/${userId}`, { status }, { withCredentials: true });
-      socket.emit('userStatusChange');
+      socket.emit('userStatusChange', status);
     };
 
     const handleVisibilityChange = async () => {
@@ -106,13 +109,12 @@ function App() {
   }
 
   useEffect(() => {
-    socket.connect();
+    socket.connect()
 
     return () => {
-      socket.disconnect();
-    };
-  }, []);
-
+      socket.disconnect()
+    }
+  }, [])
 
   useEffect(() => {
     if (!sessionStorage.getItem('animationShown')) {

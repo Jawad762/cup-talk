@@ -28,12 +28,11 @@ export const getConversationMessages = async (req, res) => {
         LEFT JOIN users as parentUsers ON parentUsers.userId = parentMessages.senderId
         WHERE messages.roomId = ?
         GROUP BY messages.messageId
-        ORDER BY messages.date ASC;
+        ORDER BY messages.date DESC
+        LIMIT 500
     `, [roomId]);
     
-    
-
-        const decryptedData = data.map(message => {
+        const decryptedData = [...data].sort((a, b) => new Date(a.date) - new Date(b.date)).map(message => {
             return {
                 ...message,
                 text: decryptMessage(message.text),
@@ -50,8 +49,8 @@ export const getConversationMessages = async (req, res) => {
 
 export const createMessage = async (req, res) => {
     try {
-        const { roomId, text, image, parentId } = req.body
-        const senderId = req.session.userId
+        const { roomId, text, image, parentId, senderId } = req.body
+        console.log(senderId)
         const encryptedMessage = encryptMessage(text)
         await db.query('INSERT INTO messages (senderId, roomId, text, image, parentId) VALUES (?, ?, ?, ?, ?)' , [senderId, roomId, encryptedMessage, image, parentId])
         res.status(200).json('Message sent successfully')
@@ -77,14 +76,15 @@ export const updateSeenStatus = async (req, res) => {
         const { roomId, seenByUser } = req.params
         const [ seenMessages ] = await db.query(`
         SELECT 
-        messageId 
+        DISTINCT messageId 
         FROM messages 
         WHERE senderId != ? AND roomId = ? AND messageId NOT IN (
-            SELECT messageId FROM seen_messages WHERE seenBy = ?
+            SELECT DISTINCT messageId FROM seen_messages WHERE seenBy = ?
         )
         `, [seenByUser, roomId, seenByUser])
         const allPromises = seenMessages.map(async (message) => {
-            await db.query(`INSERT INTO seen_messages (messageId, seenBy) VALUES (?, ?)`, [message.messageId, seenByUser])
+            console.log(message.messageId)
+            await db.query(`INSERT INTO seen_messages (messageId, seenBy) VALUES (?, ?)`, [message.messageId, Number(seenByUser)])
         })
         await Promise.all(allPromises)
         res.status(200).end()
@@ -113,8 +113,9 @@ export const composeMessage = async (req, res) => {
         `, [user_ids, reversed_user_ids])
 
         if (doesRoomExist.length > 0) {
-            await db.query(`INSERT INTO messages (senderId, roomId, text) VALUES (?, ?, ?)`, [senderId, doesRoomExist[0].roomId, encryptedMessage])
-            return res.status(200).json({ roomId: doesRoomExist[0].roomId })
+            const [ data ] = await db.query(`INSERT INTO messages (senderId, roomId, text) VALUES (?, ?, ?)`, [senderId, doesRoomExist[0].roomId, encryptedMessage])
+            const [ message ] = await db.query('SELECT * FROM messages WHERE messageId = ?', [data.insertId])
+            return res.status(200).json({...message[0], text: decryptMessage(message[0].text)})
         }
 
         else {
@@ -124,8 +125,9 @@ export const composeMessage = async (req, res) => {
              (?, ?),
              (?, ?)
              `, [newRoom.insertId, senderId, newRoom.insertId, receiverId])
-            await db.query(`INSERT INTO messages (senderId, roomId, text) VALUES (?, ?, ?)`, [senderId, newRoom.insertId, encryptedMessage])
-            return res.status(200).json({ roomId: newRoom.insertId })
+            const [ data ] = await db.query(`INSERT INTO messages (senderId, roomId, text) VALUES (?, ?, ?)`, [senderId, newRoom.insertId, encryptedMessage])
+            const [ message ] = await db.query('SELECT * FROM messages WHERE messageId = ?', [data.insertId])
+            return res.status(200).json({...message[0], text: decryptMessage(message[0].text)})
         }
 
     } catch (error) {

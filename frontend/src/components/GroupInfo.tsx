@@ -12,6 +12,7 @@ import WarningModal from './WarningModal'
 import { addStrikes, logout } from '../redux/userSlice'
 import { uploadImageToFirebase } from '../uploadImageToFirebase'
 import LoadingSpinner from './LoadingSpinner'
+import { roomType } from './Conversations'
 
 const GroupInfo = () => {
 
@@ -27,7 +28,7 @@ const GroupInfo = () => {
 
   const findRoomInfo = async () => {
     try {
-      const res = await axios.get(`/api/user/find/${id}/${currentUser.userId}`)
+      const res = await axios.get(`/api/user/find/${id}/${currentUser.userId}/0`)
       if (res.data[0].roomType !== 'group') throw new Error('Invalid room type.')
       else return res.data
     } catch (error) {
@@ -35,7 +36,7 @@ const GroupInfo = () => {
     }
   }
 
-  const { data: roomInfo } = useQuery({ queryKey: ['roomInfo', id], queryFn: findRoomInfo })
+  const { data: roomInfo, isLoading } = useQuery({ queryKey: ['roomInfo', id], queryFn: findRoomInfo })
 
   const handleEditDescription = () => {
     setIsInputDisabled(false)
@@ -46,13 +47,22 @@ const GroupInfo = () => {
     try {
       const form = new FormData(e.currentTarget)
       const description = form.get('description')
+      queryClient.setQueryData(['roomInfo', id], (prevRoom: any) => {
+        const newRoom = prevRoom.map((room: any) => {
+          return {
+            ...room,
+            groupDescription: description
+          }
+        })
+        return newRoom
+      })
+
+      setIsInputDisabled(true)
+      
       const res = await axios.put(`/api/room/update-description/${id}`, { description })
       console.log(res)
     } catch (error) {
       console.error(error)
-    } finally {
-      queryClient.invalidateQueries({ queryKey: ['roomInfo', id] })
-      setIsInputDisabled(true)
     }
   }
 
@@ -64,7 +74,7 @@ const GroupInfo = () => {
     } catch (error) {
         console.error(error)
     }
-}
+  }
 
   const addUserStrikes = async () => {
       warningModalRef.current?.showModal()
@@ -86,11 +96,30 @@ const GroupInfo = () => {
 
   const uploadProfilePicture = async (profilePicture: string) => {
     try {
+      queryClient.setQueryData(['roomInfo', id], (prevRoom: any) => {
+        const newRoom = prevRoom.map((room: any) => {
+          return {
+            ...room,
+            groupProfilePicture: profilePicture
+          }
+        })
+        return newRoom
+      })
+      queryClient.setQueryData(['rooms'], (prevRooms: roomType[]) => {
+        const newRooms = prevRooms.map(room => {
+          if (room.roomId === roomInfo[0].roomId) {
+            return {
+              ...room,
+              groupProfilePicture: profilePicture
+            }
+          }
+          return room
+        })
+        return newRooms
+      })
       await axios.put(`/api/room/update-pfp/${id}`, { profilePicture })
     } catch (error) {
       console.error(error)
-    } finally {
-      queryClient.invalidateQueries({ queryKey: ['roomInfo', id] })
     }
   }
 
@@ -128,16 +157,20 @@ const GroupInfo = () => {
       </div>
 
       <h2 className='text-xs opacity-75'>Members</h2>
-      <div className='space-y-2 overflow-y-auto'>
-        {roomInfo?.map((member: any) => (
-          <Link to={`/profile/${member.userId}`} key={member.userId} className='flex items-center gap-3 p-2 rounded-full cursor-pointer hover:bg-purpleHover'>
-            <div className='relative w-12 h-12 rounded-full'>
-              <img alt='profile-picture' className='absolute object-cover w-full h-full rounded-full' src={member.userProfilePicture || defaultPfp}/>
-            </div>
-            <p>{member.username}</p>
-          </Link>
-        ))}
+      {isLoading ?
+       <div className='flex justify-center'><LoadingSpinner/></div>
+       :
+       <div className='space-y-2 overflow-y-auto'>
+       {roomInfo?.map((member: any) => (
+         <Link to={`/profile/${member.userId}`} key={member.userId} className='flex items-center gap-3 p-2 rounded-full cursor-pointer hover:bg-purpleHover'>
+           <div className='relative w-12 h-12 rounded-full'>
+             <img alt='profile-picture' className='absolute object-cover w-full h-full rounded-full' src={member.userProfilePicture || defaultPfp}/>
+           </div>
+           <p>{member.username}</p>
+         </Link>
+       ))}
       </div>
+      }
 
       <WarningModal modalRef={warningModalRef}/>
 

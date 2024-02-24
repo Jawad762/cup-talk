@@ -32,13 +32,12 @@ export const findUser = async (req, res) => {
 
 export const findUsersFromRoom = async (req, res) => {
     try {
-        const { roomId, currentUserId } = req.params
+        const { roomId, currentUserId, limit } = req.params
 
         const [ doesUserBelong ] = await db.query(`SELECT * FROM room_participants as rp WHERE rp.roomId = ? AND rp.userId = ?`, [roomId, currentUserId])
 
-        if (doesUserBelong.length === 0) return res.status(400).json('You dont have access to this private room.')
-
-        const [data] = await db.query(`
+        if (doesUserBelong.length === 0) return res.status(400).json('You dont have access to this room.')
+        const [ data ] = await db.query(`
         SELECT 
             rp.userId,
             rp.roomId,
@@ -58,8 +57,9 @@ export const findUsersFromRoom = async (req, res) => {
         WHERE 
             rp.roomId = ?
         GROUP BY 
-            rp.userId, rp.roomId;
-    `, [roomId]);
+            rp.userId, rp.roomId
+        ${Number(limit) > 0 ? `LIMIT ${limit}` : ''}
+        `, [roomId]);
 
         res.status(200).json(data)
     } catch (error) {
@@ -179,10 +179,11 @@ export const sendNotification = async (req, res) => {
         
         const allPromises = usersToNotify.map(async (user) => {
             const [ subscriptionResult ] = await db.query('SELECT subscription FROM subscriptions WHERE userId = ?', [user.userId]);
-            return JSON.parse(subscriptionResult[0].subscription);
+            if (subscriptionResult.length > 0) return JSON.parse(subscriptionResult[0].subscription);
+            else return null
         });
 
-        const subscriptions = await Promise.all(allPromises)
+        const subscriptions = await Promise.all(allPromises.filter(subscription => subscription !== null))
 
         const sendNotification = subscriptions.map(async (sub) => {
             await webPush.sendNotification (

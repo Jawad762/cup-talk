@@ -36,11 +36,11 @@ ioServer.on('connection', socket => {
     socket.on('leaveRoom', (room) => {
         socket.leave(room)
     })
-    socket.on('sendMessage', () => {
-        socket.broadcast.emit('receivedMessage')
+    socket.on('sendMessage', (message) => {
+        socket.broadcast.emit('receivedMessage', message)
     })
-    socket.on('deleteMessage', () => {
-        socket.broadcast.emit('deletedMessage')
+    socket.on('deleteMessage', (message) => {
+        socket.broadcast.emit('deletedMessage', message)
     })
     socket.on('typing', (room) => {
         socket.broadcast.to(room).emit('typing')
@@ -48,12 +48,11 @@ ioServer.on('connection', socket => {
     socket.on('stopTyping', (room) => {
         socket.broadcast.to(room).emit('stopTyping')
     })
-    socket.on('userStatusChange', () => {
-        ioServer.emit('userStatusChange')
+    socket.on('userStatusChange', (status) => {
+        ioServer.emit('userStatusChange', status)
     })
-    socket.on('messageStatusChange', (room) => {
-        socket.to(room).emit('messageStatusChange')
-        console.log('emitting')
+    socket.on('messageStatusChange', (room, seenById) => {
+        socket.broadcast.to(room).emit('messageStatusChange', seenById)
     })
     socket.on('addToGroup', () => {
         socket.broadcast.emit('addedToGroup')

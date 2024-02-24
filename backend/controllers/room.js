@@ -14,14 +14,17 @@ export const findUserRooms = async (req, res) => {
         rooms.type,
         rooms.name,
         rooms.profilePicture AS groupProfilePicture,
-        GROUP_CONCAT(DISTINCT users.username) AS usernames,
+        CASE
+        WHEN rooms.type = 'private' THEN GROUP_CONCAT(DISTINCT users.username)
+        ELSE NULL
+        END AS usernames,
         GROUP_CONCAT(DISTINCT users.profilePicture) AS userProfilePicture,
         MAX(COALESCE(lastMessage.text, '')) AS lastMessageText,
         MAX(COALESCE(lastMessage.messageId)) AS lastMessageId,
         MAX(COALESCE(lastMessage.senderId, 0)) AS lastMessageSenderId,
         MAX(COALESCE(lastMessage.isDeleted, 0)) AS lastMessageIsDeleted,
         MAX(COALESCE(lastMessage.image, '')) AS lastMessageImage,
-        GROUP_CONCAT(seen_messages.seenBy) AS lastMessageSeenBy,
+        GROUP_CONCAT(DISTINCT seen_messages.seenBy) AS lastMessageSeenBy,
         MAX(COALESCE(lastMessage.date, ?)) AS lastMessageDate
         FROM rooms
         JOIN room_participants AS rp ON rooms.roomId = rp.roomId
@@ -62,7 +65,7 @@ export const findUserRooms = async (req, res) => {
                 lastMessageText: decryptMessage(room.lastMessageText),
                 usernames: room.usernames?.split(',') ,
                 profilePictures: room.profilePictures?.split(','),
-                lastMessageSeenBy: room.lastMessageSeenBy?.split(',').map(message => Number(message)) || null
+                lastMessageSeenBy: room.lastMessageSeenBy?.split(',').map(message => Number(message)) || []
             }
         })
 

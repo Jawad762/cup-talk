@@ -3,7 +3,7 @@ import { ImAttachment } from "react-icons/im";
 import { IoSend } from "react-icons/io5";
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../redux/store';
-import { User } from '../types';
+import { RoomInfo, User } from '../types';
 import AxiosInstance from '../Axios'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import ChatBubbleOne from './ChatBubbleOne';
@@ -21,6 +21,7 @@ import { addStrikes, logout } from '../redux/userSlice';
 import LoadingSpinner from './LoadingSpinner';
 import { uploadImageToFirebase } from '../uploadImageToFirebase';
 import { BsImageFill } from 'react-icons/bs';
+import { roomType } from './Conversations';
 
 interface SocketProp {
     socket: Socket<ServerToClientEvents, ClientToServerEvents>;
@@ -30,7 +31,6 @@ const Conversation = ({ socket }: SocketProp) => {
 
     const axios = AxiosInstance()
     const currentUser: User = useSelector((state: RootState) => state.user.user, shallowEqual)
-    const [messageText, setMessageText] = useState('')
     const [isTyping, setIsTyping] = useState(false)
     const [currentImage, setCurrentImage] = useState<null | string>(null)
     const [imageLoading, setImageLoading] = useState(false)
@@ -40,10 +40,11 @@ const Conversation = ({ socket }: SocketProp) => {
     const scrollBottomRef = useRef<HTMLDivElement>(null)
     const convoRef = useRef(null)
     const warningModalRef = useRef<HTMLDialogElement>(null)
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
     const dispatch = useDispatch()
 
     const findRoomInfo = async () => {
-        const res = await axios.get(`/api/user/find/${id}/${currentUser.userId}`)
+        const res = await axios.get(`/api/user/find/${id}/${currentUser.userId}/20`)
         return res.data
     }
 
@@ -52,30 +53,67 @@ const Conversation = ({ socket }: SocketProp) => {
         return res.data
     }
 
-    const sendMessage = async () => {
+    const sendMessage = async (messageText: string) => {
         if (messageText.length === 0 && currentImage === null) return
         
-        if (messages.length > 0) {
-            queryClient.setQueryData(['messages', id], (prevMessages: Array<MessageType>) => {
-                const newMessage = { senderId: currentUser.userId, roomId: id, text: messageText, image: currentImage, date: getCurrentTimestamp(), messageId: prevMessages[prevMessages.length - 1].messageId + 1, parentId: replyMessage?.messageId, parentUsername: replyMessage?.username, parentText: replyMessage?.text, parentImage: replyMessage?.image }
-                return [...prevMessages, newMessage]
-            }) 
-        }
+        const messages: MessageType[] = queryClient.getQueryData(['messages', id]) as MessageType[]
+        const lastMessageId = messages.length > 0 ? messages[messages.length - 1].messageId : Math.floor(Math.random() * 50000)
+        const newMessage = { senderId: currentUser.userId, username: currentUser.username, userProfilePicture: currentUser.profilePicture, roomId: id, text: messageText, image: currentImage, date: getCurrentTimestamp(), messageId: lastMessageId + 1, parentId: replyMessage?.messageId, parentUsername: replyMessage?.username, parentText: replyMessage?.text, parentImage: replyMessage?.image, seenBy: [], isDeleted: 0, nextMessage: null, prevMessage: null }
         
-        setMessageText('')
+        queryClient.setQueryData(['messages', id], (prevMessages: Array<any>) => {
+            const newMessages = [...prevMessages]
+            newMessages.push(newMessage)
+            return newMessages
+        })
+                        
+        queryClient.setQueryData(['rooms'], (prevRooms: roomType[]) => {
+            const newRooms = prevRooms?.map(room => {
+                if (room.roomId === Number(newMessage.roomId)) {
+                    return {
+                      ...room,
+                      lastMessageText: newMessage.text,
+                      lastMessageImage: newMessage.image,
+                      lastMessageSenderId: newMessage.senderId,
+                      lastMessageDate: newMessage.date,
+                      lastMessageSeenBy: newMessage.seenBy,
+                      lastMessageIsDeleted: newMessage.isDeleted,
+                      lastMessageId: newMessage.messageId
+                    }
+                }
+                else return room
+            }).sort((a, b) => new Date(b.lastMessageDate).getTime() - new Date(a.lastMessageDate).getTime())
+            
+            return newRooms
+        })
+
+        const formDOM: HTMLFormElement = document.getElementById('messageForm') as HTMLFormElement
+        formDOM.reset()
         setCurrentImage(null)
         setReplyMessage(null)
+
+        socket.emit('sendMessage', newMessage)
+        socket.emit('stopTyping', id)
         
-        await axios.post('/api/message/create', { senderId: currentUser.userId, roomId: id, text: messageText, image: currentImage, parentId: replyMessage?.messageId }),
-        socket.emit('sendMessage')
-        await axios.post('/api/user/sendNotification', { title: `${currentUser.username} sent you a new message!`, description: messageText, roomId: id })
+        await axios.post('/api/message/create', { senderId: currentUser.userId, roomId: id, text: newMessage.text, image: newMessage.image, parentId: newMessage.parentId })
+        await axios.post('/api/user/sendNotification', { title: `${currentUser.username} sent you a new message!`, description: newMessage.text, roomId: id })
     }
 
     const updateSeenStatus = async () => {
         try {
+            queryClient.setQueryData(['rooms'], (prevRooms: roomType[]) => {
+                const newRooms = prevRooms?.map(room => {
+                    if (room.roomId === Number(id) && room.lastMessageSenderId !== currentUser.userId && Array.isArray(room.lastMessageSeenBy)) {
+                        return {
+                            ...room,
+                            lastMessageSeenBy: [...room.lastMessageSeenBy, currentUser.userId]
+                        }
+                    }
+                    else return room
+                })
+                return newRooms
+            })
+            socket.emit('messageStatusChange', id, currentUser.userId as number)
             await axios.put(`/api/message/updateStatus/${id}/${currentUser.userId}`)
-            queryClient.invalidateQueries({ queryKey: ['rooms'] })
-            socket.emit('messageStatusChange', id)
         } catch (error) {
             console.error(error)
         }
@@ -103,7 +141,7 @@ const Conversation = ({ socket }: SocketProp) => {
     const { data: messages } = useQuery({ queryKey: ['messages', id], queryFn: getMessages })
 
     const { data: roomInfo } = useQuery({ queryKey: ['roomInfo', id], queryFn: findRoomInfo })
-
+    
     // to handle cases where the current user is the only member of a group and we cant filter through him
     const roomInfoWithoutCurrentUser = roomInfo?.length >= 2 ?
      roomInfo?.filter((member: any) => member.userId !== currentUser.userId)
@@ -112,15 +150,15 @@ const Conversation = ({ socket }: SocketProp) => {
     const sendMessageMutation = useMutation({
         mutationFn: sendMessage,
         onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: ['messages', id] })
-          queryClient.invalidateQueries({ queryKey: ['rooms'] })
           scrollBottomRef.current?.scrollIntoView()
         },
       })
 
     const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        sendMessageMutation.mutate()
+        const form = new FormData(e.currentTarget)
+        const messageText = form.get('messageText') as string
+        sendMessageMutation.mutate(messageText)
     }
     
     const messagesWithNextAndPrevious = messages?.map((message: MessageType, index: number) => ({
@@ -141,9 +179,17 @@ const Conversation = ({ socket }: SocketProp) => {
     useEffect(() => {
         socket.emit('joinRoom', id);
         
-        socket.on('receivedMessage', () => {
-            queryClient.invalidateQueries({ queryKey: ['messages'] })
-            scrollBottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+        socket.on('receivedMessage', (message) => {
+            if (id === message.roomId) {
+                queryClient.setQueryData(['messages', id], (prevMessages: Array<MessageType>) => {
+                    // to prevent duplication issues
+                    const doesMessageExist = prevMessages.find(prevMessage => prevMessage.messageId === message.messageId)
+                    if (doesMessageExist) return
+                    return [...prevMessages, message]
+                }) 
+                scrollBottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+            }
+            else return null
         })
 
         socket.on('typing', () => {
@@ -154,14 +200,53 @@ const Conversation = ({ socket }: SocketProp) => {
             setIsTyping(false)
         })
 
-        socket.on('userStatusChange', () => {
-            queryClient.invalidateQueries({ queryKey: ['roomInfo', id] })
-        })
+        socket.on('userStatusChange', (status) => {
+            const roomInfo: RoomInfo[] = queryClient.getQueryData(['roomInfo', id]) as RoomInfo[]
+            if (roomInfo && roomInfo[0].roomType === 'private') {
+                queryClient.setQueryData(['roomInfo', id], (prevRoomInfo: RoomInfo[]) => {
+                    const newRoomInfo = prevRoomInfo.map(roomInfo => {
+                        if (roomInfo.userId != currentUser.userId) {
+                            return {
+                                ...roomInfo,
+                                userStatus: status
+                            }
+                        }
+                        return roomInfo
+                    })
+                    return newRoomInfo
+                })
+            }
+        });
+        
+        socket.on('messageStatusChange', (seenById) => {
+            queryClient.setQueryData(['messages', id], (prevMessages: MessageType[]) => {
+                const newMessages = prevMessages?.map((message: MessageType) => {
+                    if (message.senderId === currentUser.userId && !message.seenBy?.includes(seenById)) {
+                        return {
+                            ...message,
+                            seenBy: Array.isArray(message.seenBy) && message.seenBy.length > 0 ? [...message.seenBy, seenById] : [seenById]
+                        }
+                    }
+                    else return message
+                })
+                return newMessages
+            })
+        })        
 
-        socket.on('messageStatusChange', () => {
-            queryClient.invalidateQueries({ queryKey: ['messages', id] })
-            queryClient.invalidateQueries({ queryKey: ['rooms'] })
-        })
+        socket.on('deletedMessage', (message) => {
+            queryClient.setQueryData(['messages', id], (prevMessages: MessageType[]) => {
+              const newMessages = prevMessages?.map((prevMessage: MessageType) => {
+                if (prevMessage.messageId === message.messageId) {
+                  return {
+                    ...message,
+                    isDeleted: 1,
+                  }
+                }
+                else return prevMessage
+              })
+              return newMessages
+            })
+          })
         
         return () => {
             socket.emit('leaveRoom', id);
@@ -177,16 +262,20 @@ const Conversation = ({ socket }: SocketProp) => {
     useEffect(() => {
         scrollBottomRef.current?.scrollIntoView()
     }, [messages, isTyping])
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const messageText = e.target.value;
     
-    useEffect(() => {
-        messageText.length === 0 ? socket.emit('stopTyping', id) : socket.emit('typing', id)
+        messageText.length === 0 ? socket.emit('stopTyping', id) : socket.emit('typing', id);
     
-        const timeout = setTimeout(() => {
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+        }
+    
+        timeoutRef.current = setTimeout(() => {
             socket.emit('stopTyping', id);
         }, 3000);
-    
-        return () => clearTimeout(timeout);
-    }, [messageText]);
+    };
 
     useEffect(() => {
         if (currentUser.strikes > 2) banUser() 
@@ -221,8 +310,7 @@ const Conversation = ({ socket }: SocketProp) => {
                 <div ref={scrollBottomRef} className='w-1 h-1'></div>
             </section>
             
-            
-            <form onSubmit={handleFormSubmit} className='flex relative items-center mt-auto gap-4 px-3 py-4 max-h-[12.5%] border-t-2 border-purpleFour xl:px-6'>
+            <form id='messageForm' onSubmit={handleFormSubmit} className='flex relative items-center mt-auto gap-4 px-3 py-4 max-h-[12.5%] border-t-2 border-purpleFour xl:px-6'>
                 <div className={`absolute bg-[#252837] flex items-center justify-between rounded-md border-l-4 border-purpleFour -top-1 text-center transition-all ease-in-out -translate-y-full ${replyMessage ? 'h-14 p-2 inset-x-1' : 'h-0 overflow-hidden'}`}>
                     <div>
                         <p className='text-sm text-left'>Replying to <span className='text-purpleFour'>{replyMessage?.username}:</span></p>
@@ -236,7 +324,7 @@ const Conversation = ({ socket }: SocketProp) => {
                     <input onChange={handleImageUpload} id='image' name='image' type='file' className='hidden'/>
                 </div>
                 {currentImage ? <img src={currentImage} alt='message-image' className='w-8 h-8'/> : imageLoading && <LoadingSpinner/>}
-                <input value={messageText} onChange={(e) => setMessageText(e.target.value)} className='w-full bg-transparent outline-none' maxLength={200} placeholder='Type your message here...'></input>
+                <input name='messageText' onChange={handleInputChange} className='w-full bg-transparent outline-none' maxLength={200} placeholder='Type your message here...'></input>
                 <button type='submit'><IoSend className='text-2xl cursor-pointer'/></button>
             </form>
 

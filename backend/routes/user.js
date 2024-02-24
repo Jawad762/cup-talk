@@ -6,7 +6,7 @@ const router = express.Router()
 router.get('/:userId', findUser)
 
 // find users from room
-router.get('/find/:roomId/:currentUserId', findUsersFromRoom)
+router.get('/find/:roomId/:currentUserId/:limit', findUsersFromRoom)
 
 // search for users
 router.get('/search/:userId/:input', searchUsers)

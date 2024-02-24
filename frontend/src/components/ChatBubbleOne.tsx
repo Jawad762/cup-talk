@@ -60,7 +60,7 @@ const ChatBubbleOne = ({ message, nextMessage, prevMessage, socket, roomInfo } :
             <div onClick={() => document.getElementById(message.parentId.toString())?.scrollIntoView()} className="flex items-center justify-between gap-10 px-2 py-1 my-1 text-xs border-l-4 rounded-md cursor-pointer bg-purpleHover border-purpleDark">
               <div>
                 <p className="text-purpleDark">{message.parentUsername}</p>
-                <p className="break-words line-clamp-1">{message.parentText}</p>
+                <p className="w-full break-words line-clamp-1">{message.parentText}</p>
                 {message.parentImage && !message.parentText && <BsImageFill/>}
               </div>
               {message.parentImage && <img alt='message-image' className="object-cover w-10 h-10 rounded-md" src={message.parentImage}></img>}
@@ -106,7 +106,7 @@ const ChatBubbleOne = ({ message, nextMessage, prevMessage, socket, roomInfo } :
           Copied to clipboard.
         </dialog>
 
-        <DeleteMsgModal selectedMessageId={message.messageId} modalRef={deleteMessageModalRef} socket={socket}/>
+        <DeleteMsgModal selectedMessage={message} modalRef={deleteMessageModalRef} socket={socket}/>
         <OpenImageModal imageSrc={message.image} modalRef={openImageModal}/>
         
     </article>

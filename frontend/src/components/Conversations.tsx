@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import profile from '../../public/pfp-default.jpg'
 import logo from '../../public/logo.svg'
 import { useNavigate, useParams } from 'react-router-dom';
-import { User } from '../types';
+import { MessageType, User } from '../types';
 import { useSelector } from 'react-redux';
 import { RootState } from '../redux/store';
 import AxiosInstance from '../Axios'
@@ -56,12 +56,41 @@ const Conversations = ({ socket }: SocketProp) => {
   const { data: rooms } = useQuery({ queryKey: ['rooms'], queryFn: getUserRooms })
 
   useEffect(() => {
-    socket.on('receivedMessage', () => {
-      queryClient.invalidateQueries({ queryKey: ['rooms'] })
+    socket.on('receivedMessage', (message: MessageType) => {
+      queryClient.setQueryData(['rooms'], (prevRooms: roomType[]) => {
+        const newRooms = prevRooms?.map(room => {
+          if (room.roomId === Number(message.roomId)) {
+            return {
+              ...room,
+              lastMessageText: message.text,
+              lastMessageImage: message.image,
+              lastMessageSenderId: message.senderId,
+              lastMessageDate: message.date,
+              lastMessageSeenBy: message.seenBy,
+              lastMessageIsDeleted: message.isDeleted,
+              lastMessageId: message.messageId
+            }
+          }
+          else return room
+        }).sort((a, b) => new Date(b.lastMessageDate).getTime() - new Date(a.lastMessageDate).getTime())
+        
+        return newRooms
+      })
     })
 
-    socket.on('deletedMessage', () => {
-      queryClient.invalidateQueries({ queryKey: ['rooms'] })
+    socket.on('deletedMessage', (message) => {
+      queryClient.setQueryData(['rooms'], (prevRooms: roomType[]) => {
+        const newRooms = prevRooms?.map(room => {
+          if (room.roomId === Number(message.roomId) && room.lastMessageId === message.messageId) {
+            return {
+              ...room,
+              lastMessageIsDeleted: 1,
+            }
+          }
+          else return room
+        })
+        return newRooms
+      })
     })
 
     socket.on('addedToGroup', () => {

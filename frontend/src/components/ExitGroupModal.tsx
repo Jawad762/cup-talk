@@ -4,6 +4,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "../redux/store";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from 'react';
+import { roomType } from './Conversations';
 
 type Props = {
     modalRef: React.RefObject<HTMLDialogElement>
@@ -19,17 +20,19 @@ const ExitGroupModal = ({ modalRef }: Props) => {
 
     const handleExitGroup = async () => {
         try {
-            await axios.delete(`/api/room/exit-group/${currentUser.userId}/${id}`)
-        } catch (error) {
-            console.error(error)
-        } finally {
             setIsSubmitted(true)
-            queryClient.invalidateQueries({ queryKey: ['rooms'] })
+            queryClient.setQueryData(['rooms'], (prevRooms: roomType[]) => {
+                const newRooms = prevRooms.filter(room => room.roomId !== Number(id))
+                return newRooms
+            })
             setTimeout(() => {
                 modalRef.current?.close()
                 setIsSubmitted(false)
                 navigate('/')
             }, 1000)
+            await axios.delete(`/api/room/exit-group/${currentUser.userId}/${id}`)
+        } catch (error) {
+            console.error(error)
         }
     }
 
