@@ -57,6 +57,14 @@ const Conversations = ({ socket }: SocketProp) => {
 
   useEffect(() => {
     socket.on('receivedMessage', (message: MessageType) => {
+      const rooms: roomType[] = queryClient.getQueryData(['rooms']) as roomType[]
+      const doesRoomExist = rooms.find(room => room.roomId === message.roomId)
+      
+      if (!doesRoomExist) {
+        queryClient.invalidateQueries({ queryKey: ['rooms'] })
+        return
+      }
+      
       queryClient.setQueryData(['rooms'], (prevRooms: roomType[]) => {
         const newRooms = prevRooms?.map(room => {
           if (room.roomId === Number(message.roomId)) {
