@@ -18,7 +18,10 @@ export const findUserRooms = async (req, res) => {
         WHEN rooms.type = 'private' THEN GROUP_CONCAT(DISTINCT users.username)
         ELSE NULL
         END AS usernames,
-        GROUP_CONCAT(DISTINCT users.profilePicture) AS userProfilePicture,
+        CASE
+        WHEN rooms.type = 'private' THEN GROUP_CONCAT(DISTINCT users.profilePicture)
+        ELSE NULL
+        END AS userProfilePicture,
         MAX(COALESCE(lastMessage.text, '')) AS lastMessageText,
         MAX(COALESCE(lastMessage.messageId)) AS lastMessageId,
         MAX(COALESCE(lastMessage.senderId, 0)) AS lastMessageSenderId,
