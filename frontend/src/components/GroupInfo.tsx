@@ -36,7 +36,7 @@ const GroupInfo = () => {
     }
   }
 
-  const { data: roomInfo, isLoading } = useQuery({ queryKey: ['groupInfo', id], queryFn: findRoomInfo })
+  const { data: roomInfo, isLoading } = useQuery({ queryKey: ['roomInfo', id], queryFn: findRoomInfo })
 
   const handleEditDescription = () => {
     setIsInputDisabled(false)
