@@ -56,8 +56,6 @@ function App() {
 
   const GeneralLayout = () => {
 
-    console.log(Notification.permission)
-
     const enableNotificationsModalRef = useRef<HTMLDialogElement>(null)
 
     const updateUserStatus = async (status: string) => {
