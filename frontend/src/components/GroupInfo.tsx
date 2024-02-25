@@ -36,7 +36,7 @@ const GroupInfo = () => {
     }
   }
 
-  const { data: roomInfo, isLoading } = useQuery({ queryKey: ['roomInfo', id], queryFn: findRoomInfo })
+  const { data: roomInfo, isLoading } = useQuery({ queryKey: ['groupInfo', id], queryFn: findRoomInfo })
 
   const handleEditDescription = () => {
     setIsInputDisabled(false)
@@ -158,7 +158,7 @@ const GroupInfo = () => {
 
       <h2 className='text-xs opacity-75'>Members</h2>
       {isLoading ?
-       <div className='flex justify-center'><LoadingSpinner/></div>
+       <div className='flex justify-center w-full mt-2'><LoadingSpinner/></div>
        :
        <div className='space-y-2 overflow-y-auto'>
        {roomInfo?.map((member: any) => (
